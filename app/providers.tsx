@@ -40,20 +40,30 @@ export function Providers({ children }: { children: React.ReactNode }) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
 
-    // Check for stored username
-    const storedUsername = localStorage.getItem('username');
-    setUsername(storedUsername);
-    setLoading(false);
+    // Function to update username from localStorage
+    const updateUsername = () => {
+      const storedUsername = localStorage.getItem('username');
+      setUsername(storedUsername);
+      setLoading(false);
+    };
 
-    // Listen for storage changes (when username is set in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'username') {
-        setUsername(e.newValue);
+    // Initial load
+    updateUsername();
+
+    // Listen for storage changes (when username is set in another tab or same tab)
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      if (e instanceof StorageEvent) {
+        if (e.key === 'username') {
+          setUsername(e.newValue);
+        }
+      } else {
+        // Custom event from same tab
+        updateUsername();
       }
     };
-    if (typeof window !== 'undefined') {
-      window.addEventListener('storage', handleStorageChange);
-    }
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange as EventListener);
 
     // Dark mode detection
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -63,9 +73,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     mediaQuery.addEventListener('change', handleChange);
 
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('storage', handleStorageChange);
-      }
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange as EventListener);
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);

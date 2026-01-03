@@ -44,10 +44,13 @@ export default function AuthPage() {
       const cleanUsername = username.trim().toLowerCase();
       if (typeof window !== 'undefined') {
         localStorage.setItem('username', cleanUsername);
+        // Dispatch custom event to notify Providers component
+        window.dispatchEvent(new Event('storage'));
       }
       
-      // Success - redirect to home
+      // Wait a tick to ensure context updates before redirect
       hapticFeedback('light');
+      await new Promise(resolve => setTimeout(resolve, 100));
       router.push('/');
     } catch (error: any) {
       console.error('Sign in error:', error);

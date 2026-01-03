@@ -18,13 +18,16 @@ export default function HomePage() {
   const [categorySummary, setCategorySummary] = useState<Record<string, number>>({});
 
   useEffect(() => {
+    // Wait for loading to complete
     if (loading) return;
     
+    // If no username after loading, redirect to auth
     if (!username) {
       router.push('/auth');
       return;
     }
 
+    // Load expenses once username is available
     loadExpenses();
 
     // Subscribe to real-time changes
@@ -50,9 +53,13 @@ export default function HomePage() {
   }, [username, supabase, loading, router]);
 
   const loadExpenses = async () => {
-    if (!username) return;
+    if (!username) {
+      setExpensesLoading(false);
+      return;
+    }
 
     try {
+      setExpensesLoading(true);
       let expensesData: any[] = [];
 
       if (typeof window !== 'undefined' && navigator.onLine) {
@@ -63,8 +70,16 @@ export default function HomePage() {
           .order('date', { ascending: false })
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        expensesData = data || [];
+        if (error) {
+          console.error('Error fetching expenses:', error);
+          // Fall back to localStorage on error
+          const cached = localStorage.getItem(`expenses_${username}`);
+          if (cached) {
+            expensesData = JSON.parse(cached);
+          }
+        } else {
+          expensesData = data || [];
+        }
       } else if (typeof window !== 'undefined') {
         // Load from localStorage when offline
         const cached = localStorage.getItem(`expenses_${username}`);
