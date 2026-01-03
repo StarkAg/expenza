@@ -50,20 +50,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
     // Initial load
     updateUsername();
 
-    // Listen for storage changes (when username is set in another tab or same tab)
-    const handleStorageChange = (e: StorageEvent | Event) => {
-      if (e instanceof StorageEvent) {
-        if (e.key === 'username') {
-          setUsername(e.newValue);
-        }
-      } else {
-        // Custom event from same tab
-        updateUsername();
+    // Listen for storage changes (when username is set in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'username') {
+        setUsername(e.newValue);
       }
     };
     
+    // Listen for custom storage event (when username is set in same tab)
+    const handleCustomStorage = () => {
+      updateUsername();
+    };
+    
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('storage', handleStorageChange as EventListener);
+    window.addEventListener('storage', handleCustomStorage);
 
     // Dark mode detection
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -74,7 +74,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange as EventListener);
+      window.removeEventListener('storage', handleCustomStorage);
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
