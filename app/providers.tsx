@@ -57,13 +57,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }
     };
     
-    // Listen for custom storage event (when username is set in same tab)
-    const handleCustomStorage = () => {
+    // Listen for custom event (when username is set in same tab)
+    const handleUsernameUpdate = () => {
       updateUsername();
     };
     
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('storage', handleCustomStorage);
+    window.addEventListener('username-updated', handleUsernameUpdate);
 
     // Dark mode detection
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -74,7 +74,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('storage', handleCustomStorage);
+      window.removeEventListener('username-updated', handleUsernameUpdate);
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);

@@ -45,12 +45,12 @@ export default function AuthPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('username', cleanUsername);
         // Dispatch custom event to notify Providers component
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('username-updated'));
       }
       
       // Wait a tick to ensure context updates before redirect
       hapticFeedback('light');
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
       router.push('/');
     } catch (error: any) {
       console.error('Sign in error:', error);
