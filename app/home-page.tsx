@@ -96,14 +96,14 @@ export default function HomePage() {
       const monthStart = startOfMonth(today);
       const monthEnd = endOfMonth(today);
 
-      const daily = (data || [])
+      const daily = expensesData
         .filter((e) => {
           const expenseDate = new Date(e.date);
           return expenseDate >= todayStart && expenseDate <= todayEnd;
         })
         .reduce((sum, e) => sum + parseFloat(e.amount), 0);
 
-      const monthly = (data || [])
+      const monthly = expensesData
         .filter((e) => {
           const expenseDate = new Date(e.date);
           return expenseDate >= monthStart && expenseDate <= monthEnd;
@@ -115,7 +115,7 @@ export default function HomePage() {
 
       // Calculate category summary
       const categories: Record<string, number> = {};
-      (data || []).forEach((e) => {
+      expensesData.forEach((e) => {
         categories[e.category] = (categories[e.category] || 0) + parseFloat(e.amount);
       });
       setCategorySummary(categories);
