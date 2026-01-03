@@ -31,45 +31,45 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-ios-gray-50 dark:bg-ios-gray-900">
+    <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="max-w-md mx-auto px-4 pt-4 pb-24">
-          <h1 className="text-ios-large-title text-ios-gray-900 dark:text-ios-gray-50 mb-6">
+          <h1 className="text-ios-large-title text-black dark:text-white mb-6">
             Settings
           </h1>
 
           <div className="space-y-4">
             {username && (
-              <div className="bg-white dark:bg-ios-gray-800 rounded-ios-lg p-4 shadow-ios">
-                <p className="text-ios-caption-1 text-ios-gray-600 dark:text-ios-gray-400 mb-1">
+              <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-4">
+                <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-1">
                   Signed in as
                 </p>
-                <p className="text-ios-body text-ios-gray-900 dark:text-ios-gray-50">
+                <p className="text-ios-body text-black dark:text-white">
                   @{username}
                 </p>
               </div>
             )}
 
-            <div className="bg-white dark:bg-ios-gray-800 rounded-ios-lg overflow-hidden shadow-ios">
+            <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
               <button
                 onClick={handleSignOut}
-                className="w-full px-4 py-3 text-left text-ios-body text-ios-red active:bg-ios-gray-100 dark:active:bg-ios-gray-700"
+                className="w-full px-4 py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
               >
                 Sign Out
               </button>
             </div>
 
-            <div className="bg-white dark:bg-ios-gray-800 rounded-ios-lg overflow-hidden shadow-ios">
+            <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
               <button
                 onClick={handleDeleteAccount}
-                className="w-full px-4 py-3 text-left text-ios-body text-ios-red active:bg-ios-gray-100 dark:active:bg-ios-gray-700"
+                className="w-full px-4 py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
               >
                 Delete Account
               </button>
             </div>
 
             <div className="pt-4">
-              <p className="text-ios-caption-1 text-ios-gray-500 dark:text-ios-gray-500 text-center">
+              <p className="text-ios-caption-1 text-black/50 dark:text-white/50 text-center">
                 Expenza v1.0.0
               </p>
             </div>

@@ -80,16 +80,16 @@ export default function AddExpensePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-ios-gray-50 dark:bg-ios-gray-900">
+    <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="max-w-md mx-auto px-4 pt-4 pb-24">
-          <h1 className="text-ios-large-title text-ios-gray-900 dark:text-ios-gray-50 mb-6">
+          <h1 className="text-ios-large-title text-black dark:text-white mb-6">
             Add Expense
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50 mb-2">
+              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
                 Amount
               </label>
               <input
@@ -100,19 +100,19 @@ export default function AddExpensePage() {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
                 required
-                className="w-full px-4 py-3 bg-white dark:bg-ios-gray-800 text-ios-title-2 text-ios-gray-900 dark:text-ios-gray-50 rounded-ios border border-ios-gray-200 dark:border-ios-gray-700 focus:outline-none focus:ring-2 focus:ring-ios-blue"
+                className="w-full px-4 py-3 bg-white dark:bg-black text-ios-title-2 text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50 mb-2">
+              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-ios-gray-800 text-ios-body text-ios-gray-900 dark:text-ios-gray-50 rounded-ios border border-ios-gray-200 dark:border-ios-gray-700 focus:outline-none focus:ring-2 focus:ring-ios-blue"
+                className="w-full px-4 py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               >
                 {categories.map((cat) => (
@@ -124,20 +124,20 @@ export default function AddExpensePage() {
             </div>
 
             <div>
-              <label className="block text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50 mb-2">
+              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
                 Date
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-ios-gray-800 text-ios-body text-ios-gray-900 dark:text-ios-gray-50 rounded-ios border border-ios-gray-200 dark:border-ios-gray-700 focus:outline-none focus:ring-2 focus:ring-ios-blue"
+                className="w-full px-4 py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50 mb-2">
+              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
                 Note (optional)
               </label>
               <textarea
@@ -145,7 +145,7 @@ export default function AddExpensePage() {
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Add a note..."
                 rows={3}
-                className="w-full px-4 py-3 bg-white dark:bg-ios-gray-800 text-ios-body text-ios-gray-900 dark:text-ios-gray-50 rounded-ios border border-ios-gray-200 dark:border-ios-gray-700 focus:outline-none focus:ring-2 focus:ring-ios-blue resize-none"
+                className="w-full px-4 py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 disabled={loading}
               />
             </div>
@@ -153,7 +153,7 @@ export default function AddExpensePage() {
             <button
               type="submit"
               disabled={loading || !amount || parseFloat(amount) <= 0}
-              className="w-full py-4 bg-ios-blue text-white text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
+              className="w-full py-4 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
             >
               {loading ? 'Adding...' : 'Add Expense'}
             </button>

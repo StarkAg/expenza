@@ -145,10 +145,10 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-ios-gray-50 dark:bg-ios-gray-900">
+    <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="max-w-md mx-auto px-4 pt-4 pb-24">
-          <h1 className="text-ios-large-title text-ios-gray-900 dark:text-ios-gray-50 mb-6">
+          <h1 className="text-ios-large-title text-black dark:text-white mb-6">
             Expenses
           </h1>
 
@@ -159,7 +159,7 @@ export default function HomePage() {
 
           {Object.keys(categorySummary).length > 0 && (
             <div className="mb-6">
-              <h2 className="text-ios-title-3 text-ios-gray-900 dark:text-ios-gray-50 mb-3">
+              <h2 className="text-ios-title-3 text-black dark:text-white mb-3">
                 By Category
               </h2>
               <div className="space-y-2">
@@ -169,12 +169,12 @@ export default function HomePage() {
                   .map(([category, amount]) => (
                     <div
                       key={category}
-                      className="flex justify-between items-center p-3 bg-white dark:bg-ios-gray-800 rounded-ios"
+                      className="flex justify-between items-center p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios"
                     >
-                      <span className="text-ios-body text-ios-gray-900 dark:text-ios-gray-50">
+                      <span className="text-ios-body text-black dark:text-white">
                         {category}
                       </span>
-                      <span className="text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50">
+                      <span className="text-ios-body font-semibold text-black dark:text-white">
                         ₹{amount.toFixed(2)}
                       </span>
                     </div>
@@ -184,7 +184,7 @@ export default function HomePage() {
           )}
 
           <div>
-            <h2 className="text-ios-title-3 text-ios-gray-900 dark:text-ios-gray-50 mb-3">
+            <h2 className="text-ios-title-3 text-black dark:text-white mb-3">
               Recent
             </h2>
             <ExpenseList expenses={expenses} loading={expensesLoading} onDelete={handleDelete} />

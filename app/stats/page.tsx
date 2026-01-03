@@ -54,10 +54,10 @@ export default function StatsPage() {
   });
 
   return (
-    <div className="flex flex-col h-screen bg-ios-gray-50 dark:bg-ios-gray-900">
+    <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="max-w-md mx-auto px-4 pt-4 pb-24">
-          <h1 className="text-ios-large-title text-ios-gray-900 dark:text-ios-gray-50 mb-6">
+          <h1 className="text-ios-large-title text-black dark:text-white mb-6">
             Statistics
           </h1>
 
@@ -66,22 +66,22 @@ export default function StatsPage() {
               type="month"
               value={format(selectedMonth, 'yyyy-MM')}
               onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
-              className="px-4 py-2 bg-white dark:bg-ios-gray-800 text-ios-body text-ios-gray-900 dark:text-ios-gray-50 rounded-ios border border-ios-gray-200 dark:border-ios-gray-700"
+              className="px-4 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20"
             />
           </div>
 
-          <div className="bg-white dark:bg-ios-gray-800 rounded-ios-lg p-4 shadow-ios mb-6">
-            <p className="text-ios-caption-1 text-ios-gray-600 dark:text-ios-gray-400 mb-1">
+          <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-4 mb-6">
+            <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-1">
               Total for {format(selectedMonth, 'MMMM yyyy')}
             </p>
-            <p className="text-ios-title-1 text-ios-gray-900 dark:text-ios-gray-50">
+            <p className="text-ios-title-1 text-black dark:text-white">
               ₹{monthlyTotal.toFixed(2)}
             </p>
           </div>
 
           {Object.keys(categoryTotals).length > 0 && (
             <div className="mb-6">
-              <h2 className="text-ios-title-3 text-ios-gray-900 dark:text-ios-gray-50 mb-3">
+              <h2 className="text-ios-title-3 text-black dark:text-white mb-3">
                 By Category
               </h2>
               <div className="space-y-2">
@@ -92,16 +92,16 @@ export default function StatsPage() {
                     return (
                       <div key={category} className="space-y-1">
                         <div className="flex justify-between items-center">
-                          <span className="text-ios-body text-ios-gray-900 dark:text-ios-gray-50">
+                          <span className="text-ios-body text-black dark:text-white">
                             {category}
                           </span>
-                          <span className="text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50">
+                          <span className="text-ios-body font-semibold text-black dark:text-white">
                             ₹{amount.toFixed(2)} ({percentage.toFixed(0)}%)
                           </span>
                         </div>
-                        <div className="h-2 bg-ios-gray-200 dark:bg-ios-gray-700 rounded-full overflow-hidden">
+                        <div className="h-2 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden border border-black/10 dark:border-white/10">
                           <div
-                            className="h-full bg-ios-blue rounded-full transition-all"
+                            className="h-full bg-black dark:bg-white rounded-full transition-all"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
@@ -114,7 +114,7 @@ export default function StatsPage() {
 
           {loading && (
             <div className="text-center py-12">
-              <p className="text-ios-body text-ios-gray-600 dark:text-ios-gray-400">
+              <p className="text-ios-body text-black/60 dark:text-white/60">
                 Loading...
               </p>
             </div>
@@ -122,7 +122,7 @@ export default function StatsPage() {
 
           {!loading && expenses.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-ios-body text-ios-gray-600 dark:text-ios-gray-400">
+              <p className="text-ios-body text-black/60 dark:text-white/60">
                 No expenses for this month.
               </p>
             </div>

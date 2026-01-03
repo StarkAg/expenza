@@ -4,12 +4,12 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #1c1c1e;
+  --foreground: #000000;
 }
 
 .dark {
   --background: #000000;
-  --foreground: #f2f2f7;
+  --foreground: #ffffff;
 }
 
 * {
@@ -42,6 +42,105 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+}
+
+/* Premium B&W theme overrides */
+.bg-ios-gray-50 {
+  background-color: #ffffff;
+}
+
+.dark .bg-ios-gray-50 {
+  background-color: #000000;
+}
+
+.bg-ios-gray-900 {
+  background-color: #000000;
+}
+
+.dark .bg-ios-gray-900 {
+  background-color: #000000;
+}
+
+.bg-white {
+  background-color: #ffffff;
+}
+
+.dark .bg-white {
+  background-color: #000000;
+}
+
+.bg-ios-gray-800 {
+  background-color: #ffffff;
+}
+
+.dark .bg-ios-gray-800 {
+  background-color: #000000;
+}
+
+.text-ios-gray-900 {
+  color: #000000;
+}
+
+.dark .text-ios-gray-900 {
+  color: #ffffff;
+}
+
+.text-ios-gray-50 {
+  color: #ffffff;
+}
+
+.dark .text-ios-gray-50 {
+  color: #ffffff;
+}
+
+.text-ios-gray-600 {
+  color: #000000;
+  opacity: 0.6;
+}
+
+.dark .text-ios-gray-600 {
+  color: #ffffff;
+  opacity: 0.6;
+}
+
+.text-ios-gray-400 {
+  color: #000000;
+  opacity: 0.4;
+}
+
+.dark .text-ios-gray-400 {
+  color: #ffffff;
+  opacity: 0.4;
+}
+
+.border-ios-gray-200 {
+  border-color: #000000;
+  opacity: 0.1;
+}
+
+.dark .border-ios-gray-200 {
+  border-color: #ffffff;
+  opacity: 0.1;
+}
+
+.border-ios-gray-700 {
+  border-color: #000000;
+  opacity: 0.3;
+}
+
+.dark .border-ios-gray-700 {
+  border-color: #ffffff;
+  opacity: 0.3;
+}
+
+.border-ios-gray-800 {
+  border-color: #000000;
+  opacity: 0.1;
+}
+
+.dark .border-ios-gray-800 {
+  border-color: #ffffff;
+  opacity: 0.1;
 }
 
 /* Allow text selection in input fields */
