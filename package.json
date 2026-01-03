@@ -2,6 +2,9 @@
   "name": "expenza-expense-tracker",
   "version": "1.0.0",
   "private": true,
+  "vercel": {
+    "name": "expenza-expense-tracker"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
