@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSupabase } from '../providers';
 
 export function useOfflineSync() {
-  const { supabase, user } = useSupabase();
+  const { supabase, username } = useSupabase();
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSync, setPendingSync] = useState(false);
 
@@ -32,17 +32,24 @@ export function useOfflineSync() {
   }, []);
 
   const syncPendingData = async () => {
-    if (!user || !isOnline) return;
+    if (!username || !isOnline) return;
 
     try {
-      // Get pending items from IndexedDB/localStorage
+      // Get pending items from localStorage
       const pending = localStorage.getItem('pendingExpenses');
       if (pending) {
         const expenses = JSON.parse(pending);
-        for (const expense of expenses) {
+        const pendingForUser = expenses.filter((e: any) => e.username === username);
+        for (const expense of pendingForUser) {
           await supabase.from('expenses').insert(expense);
         }
-        localStorage.removeItem('pendingExpenses');
+        // Remove synced items
+        const remaining = expenses.filter((e: any) => e.username !== username);
+        if (remaining.length > 0) {
+          localStorage.setItem('pendingExpenses', JSON.stringify(remaining));
+        } else {
+          localStorage.removeItem('pendingExpenses');
+        }
         setPendingSync(false);
       }
     } catch (error) {
