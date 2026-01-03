@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns';
 import { hapticFeedback } from '../utils/haptics';
+import { formatCurrency } from '../utils/currency';
 
 interface Expense {
   id: string;
@@ -60,7 +61,7 @@ export default function ExpenseList({ expenses, loading, onDelete }: ExpenseList
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-ios-headline font-semibold text-ios-gray-900 dark:text-ios-gray-50">
-                  ${parseFloat(expense.amount).toFixed(2)}
+                  {formatCurrency(expense.amount)}
                 </span>
                 <span className="px-2 py-0.5 bg-ios-blue/10 dark:bg-ios-blue/20 text-ios-blue text-ios-caption-1 rounded-full">
                   {expense.category}

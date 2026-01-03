@@ -55,7 +55,7 @@ export default function HomePage() {
     try {
       let expensesData: any[] = [];
 
-      if (navigator.onLine) {
+      if (typeof window !== 'undefined' && navigator.onLine) {
         const { data, error } = await supabase
           .from('expenses')
           .select('*')
@@ -65,7 +65,7 @@ export default function HomePage() {
 
         if (error) throw error;
         expensesData = data || [];
-      } else {
+      } else if (typeof window !== 'undefined') {
         // Load from localStorage when offline
         const cached = localStorage.getItem(`expenses_${username}`);
         if (cached) {
@@ -74,20 +74,22 @@ export default function HomePage() {
       }
 
       // Merge with pending expenses
-      const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
-      const pendingForUser = pending.filter((e: any) => e.username === username);
-      expensesData = [...expensesData, ...pendingForUser].sort((a, b) => {
-        const dateA = new Date(a.date || a.created_at).getTime();
-        const dateB = new Date(b.date || b.created_at).getTime();
-        return dateB - dateA;
-      });
+      if (typeof window !== 'undefined') {
+        const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
+        const pendingForUser = pending.filter((e: any) => e.username === username);
+        expensesData = [...expensesData, ...pendingForUser].sort((a, b) => {
+          const dateA = new Date(a.date || a.created_at).getTime();
+          const dateB = new Date(b.date || b.created_at).getTime();
+          return dateB - dateA;
+        });
+
+        // Cache for offline use
+        if (navigator.onLine) {
+          localStorage.setItem(`expenses_${username}`, JSON.stringify(expensesData));
+        }
+      }
 
       setExpenses(expensesData);
-
-      // Cache for offline use
-      if (navigator.onLine) {
-        localStorage.setItem(`expenses_${username}`, JSON.stringify(expensesData));
-      }
 
       // Calculate totals
       const today = new Date();
@@ -173,7 +175,7 @@ export default function HomePage() {
                         {category}
                       </span>
                       <span className="text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50">
-                        ${amount.toFixed(2)}
+                        ₹{amount.toFixed(2)}
                       </span>
                     </div>
                   ))}

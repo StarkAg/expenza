@@ -75,7 +75,7 @@ export default function StatsPage() {
               Total for {format(selectedMonth, 'MMMM yyyy')}
             </p>
             <p className="text-ios-title-1 text-ios-gray-900 dark:text-ios-gray-50">
-              ${monthlyTotal.toFixed(2)}
+              ₹{monthlyTotal.toFixed(2)}
             </p>
           </div>
 
@@ -96,7 +96,7 @@ export default function StatsPage() {
                             {category}
                           </span>
                           <span className="text-ios-body font-semibold text-ios-gray-900 dark:text-ios-gray-50">
-                            ${amount.toFixed(2)} ({percentage.toFixed(0)}%)
+                            ₹{amount.toFixed(2)} ({percentage.toFixed(0)}%)
                           </span>
                         </div>
                         <div className="h-2 bg-ios-gray-200 dark:bg-ios-gray-700 rounded-full overflow-hidden">

@@ -42,10 +42,10 @@ export default function AddExpensePage() {
 
     try {
       // Check if online
-      if (navigator.onLine) {
+      if (typeof window !== 'undefined' && navigator.onLine) {
         const { error } = await supabase.from('expenses').insert(expenseData);
         if (error) throw error;
-      } else {
+      } else if (typeof window !== 'undefined') {
         // Store offline for later sync
         const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
         pending.push(expenseData);
@@ -62,9 +62,11 @@ export default function AddExpensePage() {
     } catch (error) {
       console.error('Error adding expense:', error);
       // Fallback to offline storage
-      const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
-      pending.push(expenseData);
-      localStorage.setItem('pendingExpenses', JSON.stringify(pending));
+      if (typeof window !== 'undefined') {
+        const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
+        pending.push(expenseData);
+        localStorage.setItem('pendingExpenses', JSON.stringify(pending));
+      }
       
       // Reset form anyway
       setAmount('');

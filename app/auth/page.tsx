@@ -12,9 +12,11 @@ export default function AuthPage() {
 
   useEffect(() => {
     // Check if user is already logged in
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      router.push('/');
+    if (typeof window !== 'undefined') {
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        router.push('/');
+      }
     }
   }, [router]);
 
@@ -40,7 +42,9 @@ export default function AuthPage() {
     try {
       // Just store username in localStorage
       const cleanUsername = username.trim().toLowerCase();
-      localStorage.setItem('username', cleanUsername);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('username', cleanUsername);
+      }
       
       // Success - redirect to home
       hapticFeedback('light');

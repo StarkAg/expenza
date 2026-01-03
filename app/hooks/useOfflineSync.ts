@@ -9,6 +9,8 @@ export function useOfflineSync() {
   const [pendingSync, setPendingSync] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     setIsOnline(navigator.onLine);
 
     const handleOnline = () => {
@@ -32,7 +34,7 @@ export function useOfflineSync() {
   }, []);
 
   const syncPendingData = async () => {
-    if (!username || !isOnline) return;
+    if (typeof window === 'undefined' || !username || !isOnline) return;
 
     try {
       // Get pending items from localStorage

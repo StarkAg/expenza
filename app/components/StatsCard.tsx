@@ -1,5 +1,7 @@
 'use client';
 
+import { formatCurrency } from '../utils/currency';
+
 interface StatsCardProps {
   label: string;
   amount: number;
@@ -12,7 +14,7 @@ export default function StatsCard({ label, amount }: StatsCardProps) {
         {label}
       </p>
       <p className="text-ios-title-1 text-ios-gray-900 dark:text-ios-gray-50">
-        ${amount.toFixed(2)}
+        {formatCurrency(amount)}
       </p>
     </div>
   );

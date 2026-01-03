@@ -30,6 +30,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
@@ -46,7 +51,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         setUsername(e.newValue);
       }
     };
-    window.addEventListener('storage', handleStorageChange);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+    }
 
     // Dark mode detection
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -56,7 +63,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     mediaQuery.addEventListener('change', handleChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageChange);
+      }
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
