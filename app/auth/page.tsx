@@ -60,17 +60,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black px-4">
-      <div className="w-full max-w-md">
+    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black px-3 sm:px-4 md:px-6">
+      <div className="w-full max-w-md lg:max-w-lg">
         <h1 className="text-ios-large-title text-black dark:text-white mb-2 text-center">
           Expenza
         </h1>
-        <p className="text-ios-body text-black/60 dark:text-white/60 mb-8 text-center">
+        <p className="text-ios-body text-black/60 dark:text-white/60 mb-6 sm:mb-8 text-center">
           Track your expenses effortlessly
         </p>
 
-        <div className="space-y-4">
-          <form onSubmit={handleSignIn} className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">
             <div>
               <input
                 type="text"
@@ -81,7 +81,7 @@ export default function AuthPage() {
                 minLength={3}
                 maxLength={20}
                 pattern="[a-zA-Z0-9_]{3,20}"
-                className="w-full px-4 py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
                 autoFocus
               />
@@ -93,7 +93,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading || !username.trim()}
-              className="w-full py-4 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
+              className="w-full py-3 sm:py-4 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
             >
               {loading ? 'Signing in...' : 'Continue'}
             </button>

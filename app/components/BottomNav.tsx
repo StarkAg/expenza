@@ -22,8 +22,8 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black backdrop-blur-xl border-t border-black/10 dark:border-white/10 pb-safe-bottom">
-      <div className="max-w-md mx-auto flex justify-around items-center h-16">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black backdrop-blur-xl border-t border-black/10 dark:border-white/10 pb-safe-bottom z-50">
+      <div className="w-full max-w-md lg:max-w-2xl mx-auto flex justify-around items-center h-14 sm:h-16 px-2 sm:px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.Icon;
@@ -31,14 +31,14 @@ export default function BottomNav() {
             <button
               key={item.href}
               onClick={() => handleClick(item.href)}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+              className={`flex flex-col items-center justify-center flex-1 h-full transition-colors min-w-0 ${
                 isActive
                   ? 'text-black dark:text-white'
                   : 'text-black/40 dark:text-white/40'
               }`}
             >
-              <Icon className="mb-1" size={22} />
-              <span className="text-ios-caption-1">{item.label}</span>
+              <Icon className="mb-0.5 sm:mb-1" size={20} />
+              <span className="text-ios-caption-1 text-xs sm:text-sm truncate w-full text-center">{item.label}</span>
             </button>
           );
         })}

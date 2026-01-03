@@ -9,9 +9,9 @@ export default function OfflineIndicator() {
   if (isOnline && !pendingSync) return null;
 
   return (
-    <div className="fixed top-safe-top left-0 right-0 z-50 px-4 pt-safe-top pb-2">
+    <div className="fixed top-safe-top left-0 right-0 z-50 px-3 sm:px-4 pt-safe-top pb-2">
       <div
-        className={`max-w-md mx-auto px-4 py-2 rounded-ios text-center text-ios-caption-1 flex items-center justify-center gap-2 ${
+        className={`w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 py-2 rounded-ios text-center text-ios-caption-1 flex items-center justify-center gap-2 ${
           !isOnline
             ? 'bg-black dark:bg-white text-white dark:text-black'
             : pendingSync

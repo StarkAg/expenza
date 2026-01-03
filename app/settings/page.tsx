@@ -33,14 +33,14 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="max-w-md mx-auto px-4 pt-4 pb-24">
-          <h1 className="text-ios-large-title text-black dark:text-white mb-6">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
+          <h1 className="text-ios-large-title text-black dark:text-white mb-4 sm:mb-6">
             Settings
           </h1>
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {username && (
-              <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-4">
+              <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">
                 <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-1">
                   Signed in as
                 </p>
@@ -53,7 +53,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
               <button
                 onClick={handleSignOut}
-                className="w-full px-4 py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
               >
                 Sign Out
               </button>
@@ -62,7 +62,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
               <button
                 onClick={handleDeleteAccount}
-                className="w-full px-4 py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
               >
                 Delete Account
               </button>

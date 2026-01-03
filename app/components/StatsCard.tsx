@@ -9,11 +9,11 @@ interface StatsCardProps {
 
 export default function StatsCard({ label, amount }: StatsCardProps) {
   return (
-    <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-4">
+    <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">
       <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-1">
         {label}
       </p>
-      <p className="text-ios-title-1 text-black dark:text-white">
+      <p className="text-ios-title-1 sm:text-ios-title-2 text-black dark:text-white break-words">
         {formatCurrency(amount)}
       </p>
     </div>

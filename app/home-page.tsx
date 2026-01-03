@@ -162,34 +162,34 @@ export default function HomePage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="max-w-md mx-auto px-4 pt-4 pb-24">
-          <h1 className="text-ios-large-title text-black dark:text-white mb-6">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
+          <h1 className="text-ios-large-title text-black dark:text-white mb-4 sm:mb-6">
             Expenses
           </h1>
 
-          <div className="space-y-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <StatsCard label="Today" amount={dailyTotal} />
             <StatsCard label="This Month" amount={monthlyTotal} />
           </div>
 
           {Object.keys(categorySummary).length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-ios-title-3 text-black dark:text-white mb-3">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-ios-title-3 text-black dark:text-white mb-2 sm:mb-3">
                 By Category
               </h2>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                 {Object.entries(categorySummary)
                   .sort(([, a], [, b]) => b - a)
-                  .slice(0, 5)
+                  .slice(0, 6)
                   .map(([category, amount]) => (
                     <div
                       key={category}
-                      className="flex justify-between items-center p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios"
+                      className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios"
                     >
-                      <span className="text-ios-body text-black dark:text-white">
+                      <span className="text-ios-body text-black dark:text-white truncate mr-2">
                         {category}
                       </span>
-                      <span className="text-ios-body font-semibold text-black dark:text-white">
+                      <span className="text-ios-body font-semibold text-black dark:text-white whitespace-nowrap">
                         ₹{amount.toFixed(2)}
                       </span>
                     </div>
@@ -199,7 +199,7 @@ export default function HomePage() {
           )}
 
           <div>
-            <h2 className="text-ios-title-3 text-black dark:text-white mb-3">
+            <h2 className="text-ios-title-3 text-black dark:text-white mb-2 sm:mb-3">
               Recent
             </h2>
             <ExpenseList expenses={expenses} loading={expensesLoading} onDelete={handleDelete} />
