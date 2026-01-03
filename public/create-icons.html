@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Icons</title>
+</head>
+<body>
+    <h1>Icon Generator</h1>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <br>
+    <button onclick="downloadIcons()">Download Icons</button>
+    
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            // Blue background
+            ctx.fillStyle = '#007AFF';
+            ctx.fillRect(0, 0, size, size);
+            // White circle
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - size*0.1, 0, 2 * Math.PI);
+            ctx.fill();
+            // Dollar sign
+            ctx.fillStyle = '#007AFF';
+            ctx.font = `bold ${size*0.3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', size/2, size/2);
+        }
+        
+        drawIcon(document.getElementById('canvas512'), 512);
+        drawIcon(document.getElementById('canvas192'), 192);
+        
+        function downloadIcons() {
+            const canvas512 = document.getElementById('canvas512');
+            const canvas192 = document.getElementById('canvas192');
+            
+            canvas512.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-512.png';
+                a.click();
+            });
+            
+            setTimeout(() => {
+                canvas192.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'icon-192.png';
+                    a.click();
+                });
+            }, 100);
+        }
+    </script>
+</body>
+</html>
+
