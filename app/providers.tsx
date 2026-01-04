@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate';
 
 const SupabaseContext = createContext<{
   supabase: SupabaseClient;
@@ -19,6 +20,9 @@ export function useSupabase() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Enable service worker update detection and auto-refresh
+  useServiceWorkerUpdate();
+
   const [supabase] = useState(() =>
     createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

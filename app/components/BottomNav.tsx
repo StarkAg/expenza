@@ -3,13 +3,12 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { hapticFeedback } from '../utils/haptics';
-import { HomeIcon, AddIcon, StatsIcon, SettingsIcon, TransactionsIcon } from './Icons';
+import { AddIcon, StatsIcon, SettingsIcon, TransactionsIcon } from './Icons';
 
 const navItems = [
-  { href: '/', label: 'Home', Icon: HomeIcon },
+  { href: '/', label: 'Stats', Icon: StatsIcon },
   { href: '/transactions', label: 'Transactions', Icon: TransactionsIcon },
   { href: '/add', label: 'Add', Icon: AddIcon },
-  { href: '/stats', label: 'Stats', Icon: StatsIcon },
   { href: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
