@@ -2,6 +2,8 @@
 
 A production-ready iPhone-like expense tracker web app built with Next.js 14, Tailwind CSS, and Supabase.
 
+> Last updated: January 2025
+
 ## Features
 
 - 🎨 **Native iOS Feel** - Designed to feel like a native iPhone app when added to Home Screen
