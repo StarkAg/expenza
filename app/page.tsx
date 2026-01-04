@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSupabase } from '../providers';
-import BottomNav from '../components/BottomNav';
+import { useSupabase } from './providers';
+import BottomNav from './components/BottomNav';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths } from 'date-fns';
 
 export default function StatsPage() {
