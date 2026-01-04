@@ -219,3 +219,4 @@ supabase
 - Recurring expenses
 - Budget tracking
 
+

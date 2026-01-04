@@ -130,3 +130,4 @@ npm run lint
 - Delete `.next` folder: `rm -rf .next`
 - Rebuild: `npm run build`
 
+

@@ -118,3 +118,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - See `ARCHITECTURE.md` for technical details
 - Review `DEPLOYMENT.md` for production setup
 
+

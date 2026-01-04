@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { hapticFeedback } from '../utils/haptics';
 import { formatCurrency } from '../utils/currency';
+import { EditIcon, DeleteIcon } from './Icons';
 
 interface Expense {
   id: string;
@@ -17,9 +19,12 @@ interface ExpenseListProps {
   expenses: Expense[];
   loading: boolean;
   onDelete: (id: string) => void;
+  onEdit?: (expense: Expense) => void;
 }
 
-export default function ExpenseList({ expenses, loading, onDelete }: ExpenseListProps) {
+export default function ExpenseList({ expenses, loading, onDelete, onEdit }: ExpenseListProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -43,48 +48,82 @@ export default function ExpenseList({ expenses, loading, onDelete }: ExpenseList
     );
   }
 
-  const handleDelete = (id: string) => {
+  const handleClick = (id: string) => {
+    hapticFeedback('light');
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     hapticFeedback('medium');
     if (confirm('Delete this expense?')) {
       onDelete(id);
+      setExpandedId(null);
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent, expense: Expense) => {
+    e.stopPropagation();
+    hapticFeedback('light');
+    if (onEdit) {
+      onEdit(expense);
+      setExpandedId(null);
     }
   };
 
   return (
     <div className="space-y-3">
-      {expenses.map((expense) => (
-        <div
-          key={expense.id}
-          className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios p-4"
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-ios-headline font-semibold text-black dark:text-white">
-                  {formatCurrency(expense.amount)}
-                </span>
-                <span className="px-2 py-0.5 bg-black/10 dark:bg-white/20 text-black dark:text-white text-ios-caption-1 rounded-full border border-black/20 dark:border-white/20">
-                  {expense.category}
-                </span>
+      {expenses.map((expense) => {
+        const isExpanded = expandedId === expense.id;
+        return (
+          <div
+            key={expense.id}
+            onClick={() => handleClick(expense.id)}
+            className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios p-4 cursor-pointer active:opacity-80 transition-opacity"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-ios-headline font-semibold text-black dark:text-white">
+                    {formatCurrency(expense.amount)}
+                  </span>
+                  <span className="px-2 py-0.5 bg-black/10 dark:bg-white/20 text-black dark:text-white text-ios-caption-1 rounded-full border border-black/20 dark:border-white/20">
+                    {expense.category}
+                  </span>
+                </div>
+                {expense.note && (
+                  <p className="text-ios-subhead text-black/60 dark:text-white/60">
+                    {expense.note}
+                  </p>
+                )}
               </div>
-              {expense.note && (
-                <p className="text-ios-subhead text-black/60 dark:text-white/60">
-                  {expense.note}
-                </p>
-              )}
             </div>
-            <button
-              onClick={() => handleDelete(expense.id)}
-              className="ml-4 text-black dark:text-white text-ios-caption-1 underline"
-            >
-              Delete
-            </button>
+            <p className="text-ios-caption-1 text-black/50 dark:text-white/50 mb-2">
+              {format(new Date(expense.date), 'MMM d, yyyy')}
+            </p>
+            {isExpanded && (
+              <div className="flex gap-3 pt-2 border-t border-black/10 dark:border-white/10 mt-2">
+                {onEdit && (
+                  <button
+                    onClick={(e) => handleEdit(e, expense)}
+                    className="flex items-center gap-2 px-3 py-2 bg-black/5 dark:bg-white/10 text-black dark:text-white rounded-ios active:opacity-80 transition-opacity"
+                  >
+                    <EditIcon size={18} />
+                    <span className="text-ios-body">Edit</span>
+                  </button>
+                )}
+                <button
+                  onClick={(e) => handleDelete(e, expense.id)}
+                  className="flex items-center gap-2 px-3 py-2 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-ios active:opacity-80 transition-opacity"
+                >
+                  <DeleteIcon size={18} />
+                  <span className="text-ios-body">Delete</span>
+                </button>
+              </div>
+            )}
           </div>
-          <p className="text-ios-caption-1 text-black/50 dark:text-white/50">
-            {format(new Date(expense.date), 'MMM d, yyyy')}
-          </p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

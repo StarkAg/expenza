@@ -21,3 +21,4 @@ DROP INDEX IF EXISTS idx_expenses_user_date;
 CREATE INDEX IF NOT EXISTS idx_expenses_username ON public.expenses(username);
 CREATE INDEX IF NOT EXISTS idx_expenses_username_date ON public.expenses(username, date);
 
+

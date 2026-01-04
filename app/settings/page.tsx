@@ -1,13 +1,75 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '../providers';
 import BottomNav from '../components/BottomNav';
 import { hapticFeedback } from '../utils/haptics';
+import { EditIcon, DeleteIcon, GripVerticalIcon, AddIcon } from '../components/Icons';
+import { formatCurrency } from '../utils/currency';
+import {
+  getCategories,
+  setCategories,
+  updateCategory,
+  removeCategory,
+  reorderCategories,
+  resetCategories,
+} from '../utils/categories';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { supabase, username } = useSupabase();
+  const [categories, setCategoriesState] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<any | null>(null);
+  const [accountName, setAccountName] = useState('');
+  const [accountType, setAccountType] = useState<'bank' | 'credit_card'>('bank');
+  const [accountBalance, setAccountBalance] = useState('');
+
+  useEffect(() => {
+    loadCategories();
+    loadAccounts();
+
+    // Listen for category updates from other components
+    const handleUpdate = () => loadCategories();
+    window.addEventListener('categoriesUpdated', handleUpdate);
+    return () => window.removeEventListener('categoriesUpdated', handleUpdate);
+  }, [username, supabase]);
+
+  const loadCategories = () => {
+    setCategoriesState(getCategories());
+  };
+
+  const loadAccounts = async () => {
+    if (!username) {
+      setAccountsLoading(false);
+      return;
+    }
+
+    try {
+      setAccountsLoading(true);
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('username', username)
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAccounts(data || []);
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+      setAccounts([]);
+    } finally {
+      setAccountsLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     hapticFeedback('medium');
@@ -30,6 +92,146 @@ export default function SettingsPage() {
     }
   };
 
+  const handleStartEdit = (index: number) => {
+    hapticFeedback('light');
+    setEditingId(index);
+    setEditValue(categories[index]);
+  };
+
+  const handleSaveEdit = (index: number) => {
+    hapticFeedback('light');
+    const newName = editValue.trim();
+    if (newName && newName !== categories[index]) {
+      updateCategory(categories[index], newName);
+      loadCategories();
+    }
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  const handleDelete = (index: number) => {
+    hapticFeedback('medium');
+    if (confirm(`Delete category "${categories[index]}"?`)) {
+      removeCategory(categories[index]);
+      loadCategories();
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+    hapticFeedback('light');
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      reorderCategories(draggedIndex, index);
+      loadCategories();
+      hapticFeedback('medium');
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleReset = () => {
+    hapticFeedback('medium');
+    if (confirm('Reset categories to defaults? This will remove all custom categories.')) {
+      resetCategories();
+      loadCategories();
+    }
+  };
+
+  const handleAccountSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !accountName.trim()) return;
+
+    hapticFeedback('medium');
+    const accountData = {
+      username: username,
+      name: accountName.trim(),
+      type: accountType,
+      balance: accountBalance ? parseFloat(accountBalance) : 0,
+    };
+
+    try {
+      if (editingAccount) {
+        const { error } = await supabase
+          .from('accounts')
+          .update(accountData)
+          .eq('id', editingAccount.id)
+          .eq('username', username);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('accounts').insert(accountData);
+        if (error) throw error;
+      }
+
+      setAccountName('');
+      setAccountBalance('');
+      setAccountType('bank');
+      setEditingAccount(null);
+      setShowAccountForm(false);
+      loadAccounts();
+      hapticFeedback('light');
+    } catch (error) {
+      console.error('Error saving account:', error);
+      hapticFeedback('medium');
+    }
+  };
+
+  const handleAccountEdit = (account: any) => {
+    setEditingAccount(account);
+    setAccountName(account.name);
+    setAccountType(account.type);
+    setAccountBalance(account.balance.toString());
+    setShowAccountForm(true);
+    hapticFeedback('light');
+  };
+
+  const handleAccountDelete = async (id: string) => {
+    if (!confirm('Delete this account?')) return;
+
+    hapticFeedback('medium');
+    try {
+      const { error } = await supabase.from('accounts').delete().eq('id', id).eq('username', username);
+      if (error) throw error;
+      loadAccounts();
+      hapticFeedback('light');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      hapticFeedback('medium');
+    }
+  };
+
+  const handleAccountCancel = () => {
+    setAccountName('');
+    setAccountBalance('');
+    setAccountType('bank');
+    setEditingAccount(null);
+    setShowAccountForm(false);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
@@ -49,6 +251,233 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
+
+            {/* Categories Section */}
+            <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-black/10 dark:border-white/10">
+                <h2 className="text-ios-title-3 text-black dark:text-white">Categories</h2>
+                <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mt-1">
+                  Edit, reorder, or remove categories
+                </p>
+              </div>
+              <div className="divide-y divide-black/10 dark:divide-white/10">
+                {categories.map((category, index) => (
+                  <div
+                    key={`${category}-${index}`}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-move transition-colors ${
+                      dragOverIndex === index
+                        ? 'bg-black/5 dark:bg-white/5'
+                        : 'bg-transparent'
+                    } ${draggedIndex === index ? 'opacity-50' : ''}`}
+                  >
+                    <div className="text-black/40 dark:text-white/40 flex-shrink-0">
+                      <GripVerticalIcon size={18} />
+                    </div>
+                    {editingId === index ? (
+                      <div className="flex-1 flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={() => handleSaveEdit(index)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSaveEdit(index);
+                            } else if (e.key === 'Escape') {
+                              handleCancelEdit();
+                            }
+                          }}
+                          className="flex-1 px-2 py-1 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          autoFocus
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-ios-body text-black dark:text-white">
+                          {category}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(index)}
+                            className="p-1.5 text-black dark:text-white active:opacity-70"
+                            aria-label="Edit category"
+                          >
+                            <EditIcon size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(index)}
+                            className="p-1.5 text-red-500 active:opacity-70"
+                            aria-label="Delete category"
+                          >
+                            <DeleteIcon size={16} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-black/10 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="w-full px-3 py-2 text-ios-body text-red-500 text-center active:opacity-70"
+                >
+                  Reset to Defaults
+                </button>
+              </div>
+            </div>
+
+            {/* Accounts Section */}
+            <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-black/10 dark:border-white/10 flex justify-between items-center">
+                <div>
+                  <h2 className="text-ios-title-3 text-black dark:text-white">Accounts</h2>
+                  <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mt-1">
+                    Banks and credit cards
+                  </p>
+                </div>
+                {!showAccountForm && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAccountForm(true);
+                      hapticFeedback('light');
+                    }}
+                    className="p-2 bg-black dark:bg-white text-white dark:text-black rounded-ios active:opacity-80"
+                    aria-label="Add account"
+                  >
+                    <AddIcon size={18} />
+                  </button>
+                )}
+              </div>
+
+              {showAccountForm ? (
+                <form onSubmit={handleAccountSubmit} className="px-3 sm:px-4 py-3 space-y-3">
+                  <div>
+                    <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="Bank or card name"
+                      required
+                      className="w-full px-3 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                      Type
+                    </label>
+                    <select
+                      value={accountType}
+                      onChange={(e) => setAccountType(e.target.value as 'bank' | 'credit_card')}
+                      className="w-full px-3 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                    >
+                      <option value="bank">Bank</option>
+                      <option value="credit_card">Credit Card</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                      Balance (optional)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*\.?[0-9]*"
+                      value={accountBalance}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setAccountBalance(value);
+                        }
+                      }}
+                      placeholder="0.00"
+                      className="w-full px-3 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAccountCancel}
+                      className="flex-1 px-3 py-2 bg-white dark:bg-black text-black dark:text-white text-ios-body font-semibold rounded-ios border border-black/20 dark:border-white/20 active:opacity-80"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!accountName.trim()}
+                      className="flex-1 px-3 py-2 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios active:opacity-80 disabled:opacity-50"
+                    >
+                      {editingAccount ? 'Update' : 'Add'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  {accountsLoading ? (
+                    <div className="px-3 sm:px-4 py-3 text-center">
+                      <p className="text-ios-body text-black/60 dark:text-white/60">Loading...</p>
+                    </div>
+                  ) : accounts.length === 0 ? (
+                    <div className="px-3 sm:px-4 py-3 text-center">
+                      <p className="text-ios-body text-black/60 dark:text-white/60">No accounts yet</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-black/10 dark:divide-white/10">
+                      {accounts.map((account) => (
+                        <div
+                          key={account.id}
+                          className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-ios-body">
+                                {account.type === 'credit_card' ? '💳' : '🏦'}
+                              </span>
+                              <span className="text-ios-body text-black dark:text-white">{account.name}</span>
+                            </div>
+                            <span className="text-ios-caption-1 text-black/60 dark:text-white/60">
+                              {formatCurrency(account.balance)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleAccountEdit(account)}
+                              className="p-1.5 text-black dark:text-white active:opacity-70"
+                              aria-label="Edit account"
+                            >
+                              <EditIcon size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAccountDelete(account.id)}
+                              className="p-1.5 text-red-500 active:opacity-70"
+                              aria-label="Delete account"
+                            >
+                              <DeleteIcon size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
               <button
@@ -80,4 +509,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

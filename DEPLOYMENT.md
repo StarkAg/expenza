@@ -123,3 +123,4 @@ Common optimizations:
 3. Update Supabase redirect URLs to include your custom domain
 4. DNS will be configured automatically by Vercel
 
+

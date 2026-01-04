@@ -50,3 +50,4 @@ The placeholder icon files are created. For production, replace:
 
 With actual app icons for better PWA experience.
 
+

@@ -4,18 +4,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from './providers';
 import BottomNav from './components/BottomNav';
-import ExpenseList from './components/ExpenseList';
 import StatsCard from './components/StatsCard';
-import { format, startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
+import AccountsList from './components/AccountsList';
+import FixedExpensesList from './components/FixedExpensesList';
+import ExpenseLineChart from './components/ExpenseLineChart';
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function HomePage() {
   const router = useRouter();
   const { supabase, username, loading } = useSupabase();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [expensesLoading, setExpensesLoading] = useState(true);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
+  const [fixedExpensesLoading, setFixedExpensesLoading] = useState(true);
   const [dailyTotal, setDailyTotal] = useState(0);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [categorySummary, setCategorySummary] = useState<Record<string, number>>({});
+  const [chartData, setChartData] = useState<{ date: string; amount: number }[]>([]);
 
   useEffect(() => {
     // Wait for loading to complete
@@ -27,11 +34,13 @@ export default function HomePage() {
       return;
     }
 
-    // Load expenses once username is available
+    // Load data once username is available
     loadExpenses();
+    loadAccounts();
+    loadFixedExpenses();
 
     // Subscribe to real-time changes
-    const channel = supabase
+    const expensesChannel = supabase
       .channel('expenses-changes')
       .on(
         'postgres_changes',
@@ -47,8 +56,42 @@ export default function HomePage() {
       )
       .subscribe();
 
+    const accountsChannel = supabase
+      .channel('accounts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accounts',
+          filter: `username=eq.${username}`,
+        },
+        () => {
+          loadAccounts();
+        }
+      )
+      .subscribe();
+
+    const fixedExpensesChannel = supabase
+      .channel('fixed-expenses-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fixed_expenses',
+          filter: `username=eq.${username}`,
+        },
+        () => {
+          loadFixedExpenses();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(expensesChannel);
+      supabase.removeChannel(accountsChannel);
+      supabase.removeChannel(fixedExpensesChannel);
     };
   }, [username, supabase, loading, router]);
 
@@ -136,6 +179,25 @@ export default function HomePage() {
         categories[e.category] = (categories[e.category] || 0) + parseFloat(e.amount);
       });
       setCategorySummary(categories);
+
+      // Calculate monthly chart data (last 6 months)
+      const chartDataPoints: { date: string; amount: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthDate = subMonths(today, i);
+        const monthStart = startOfMonth(monthDate);
+        const monthEnd = endOfMonth(monthDate);
+        const monthTotal = expensesData
+          .filter((e) => {
+            const expenseDate = new Date(e.date);
+            return expenseDate >= monthStart && expenseDate <= monthEnd;
+          })
+          .reduce((sum, e) => sum + parseFloat(e.amount), 0);
+        chartDataPoints.push({
+          date: format(monthDate, 'MMM'),
+          amount: monthTotal,
+        });
+      }
+      setChartData(chartDataPoints);
     } catch (error) {
       console.error('Error loading expenses:', error);
     } finally {
@@ -143,34 +205,87 @@ export default function HomePage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!username) return;
-
-    // Optimistic update
-    const previousExpenses = expenses;
-    setExpenses(expenses.filter((e) => e.id !== id));
+  const loadAccounts = async () => {
+    if (!username) {
+      setAccountsLoading(false);
+      return;
+    }
 
     try {
-      const { error } = await supabase.from('expenses').delete().eq('id', id).eq('username', username);
-      if (error) throw error;
+      setAccountsLoading(true);
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('username', username)
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching accounts:', error);
+        setAccounts([]);
+      } else {
+        setAccounts(data || []);
+      }
     } catch (error) {
-      console.error('Error deleting expense:', error);
-      setExpenses(previousExpenses);
+      console.error('Error loading accounts:', error);
+      setAccounts([]);
+    } finally {
+      setAccountsLoading(false);
     }
   };
+
+  const loadFixedExpenses = async () => {
+    if (!username) {
+      setFixedExpensesLoading(false);
+      return;
+    }
+
+    try {
+      setFixedExpensesLoading(true);
+      const { data, error } = await supabase
+        .from('fixed_expenses')
+        .select('*')
+        .eq('username', username)
+        .order('day_of_month', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching fixed expenses:', error);
+        setFixedExpenses([]);
+      } else {
+        setFixedExpenses(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading fixed expenses:', error);
+      setFixedExpenses([]);
+    } finally {
+      setFixedExpensesLoading(false);
+    }
+  };
+
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
-          <h1 className="text-ios-large-title text-black dark:text-white mb-4 sm:mb-6">
-            Expenses
-          </h1>
-
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-2 sm:px-3 md:px-4 lg:px-4 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <StatsCard label="Today" amount={dailyTotal} />
             <StatsCard label="This Month" amount={monthlyTotal} />
           </div>
+
+          <AccountsList accounts={accounts} loading={accountsLoading} />
+
+          <FixedExpensesList fixedExpenses={fixedExpenses} loading={fixedExpensesLoading} />
+
+          {chartData.length > 0 && (
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-ios-title-3 text-black dark:text-white mb-2 sm:mb-3">
+                Monthly Expenses
+              </h2>
+              <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">
+                <ExpenseLineChart data={chartData} />
+              </div>
+            </div>
+          )}
 
           {Object.keys(categorySummary).length > 0 && (
             <div className="mb-4 sm:mb-6">
@@ -197,13 +312,6 @@ export default function HomePage() {
               </div>
             </div>
           )}
-
-          <div>
-            <h2 className="text-ios-title-3 text-black dark:text-white mb-2 sm:mb-3">
-              Recent
-            </h2>
-            <ExpenseList expenses={expenses} loading={expensesLoading} onDelete={handleDelete} />
-          </div>
         </div>
       </main>
       <BottomNav />

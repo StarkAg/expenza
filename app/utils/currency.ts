@@ -11,3 +11,4 @@ export function formatCurrencyWithoutSymbol(amount: number | string): string {
   return numAmount.toFixed(2);
 }
 
+

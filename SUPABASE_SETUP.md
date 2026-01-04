@@ -39,3 +39,4 @@ After enabling anonymous auth and running the schema:
 2. Check that a profile is created in the `profiles` table
 3. Verify that expenses can be added and viewed
 
+
