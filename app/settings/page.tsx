@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '../providers';
 import BottomNav from '../components/BottomNav';
 import { hapticFeedback } from '../utils/haptics';
-import { EditIcon, DeleteIcon, GripVerticalIcon, AddIcon } from '../components/Icons';
+import { EditIcon, DeleteIcon, GripVerticalIcon, AddIcon, SunIcon, MoonIcon, HalfMoonIcon } from '../components/Icons';
 import { formatCurrency } from '../utils/currency';
 import {
   getCategories,
@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const [accountName, setAccountName] = useState('');
   const [accountType, setAccountType] = useState<'bank' | 'credit_card'>('bank');
   const [accountBalance, setAccountBalance] = useState('');
-  const [showThemeOptions, setShowThemeOptions] = useState(false);
+  const [isThemeAnimating, setIsThemeAnimating] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -299,21 +299,33 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => {
                         hapticFeedback('light');
-                        setShowThemeOptions((prev) => {
-                          const next = !prev;
-                          if (next) {
-                            // Auto-collapse after a short delay
-                            setTimeout(() => {
-                              setShowThemeOptions(false);
-                            }, 2500);
-                          }
-                          return next;
-                        });
+                        setIsThemeAnimating(true);
+                        
+                        // Cycle through: Dark -> Auto -> Light -> Dark...
+                        const themeOrder: ('dark' | 'system' | 'light')[] = ['dark', 'system', 'light'];
+                        const currentIndex = themeOrder.indexOf(themeMode as any);
+                        const nextIndex = (currentIndex + 1) % themeOrder.length;
+                        const nextTheme = themeOrder[nextIndex];
+                        
+                        setThemeMode(nextTheme);
+                        
+                        // Reset animation after transition
+                        setTimeout(() => {
+                          setIsThemeAnimating(false);
+                        }, 300);
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/10 text-black/80 dark:text-white/80 text-ios-caption-1 active:opacity-80"
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/10 text-black/80 dark:text-white/80 text-ios-caption-1 active:opacity-80 transition-all duration-300 ${
+                        isThemeAnimating ? 'scale-95 opacity-70' : 'scale-100 opacity-100'
+                      }`}
                     >
-                      <span className="text-base">
-                        {themeMode === 'light' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌓'}
+                      <span className={`transition-all duration-300 ${isThemeAnimating ? 'rotate-180 scale-110' : ''}`}>
+                        {themeMode === 'light' ? (
+                          <SunIcon size={18} />
+                        ) : themeMode === 'dark' ? (
+                          <MoonIcon size={18} />
+                        ) : (
+                          <HalfMoonIcon size={18} />
+                        )}
                       </span>
                       <span>
                         {themeMode === 'light'
@@ -324,37 +336,6 @@ export default function SettingsPage() {
                       </span>
                     </button>
                   </div>
-                  {showThemeOptions && (
-                    <div className="mt-3 flex justify-center">
-                      <div className="inline-flex rounded-full bg-black/5 dark:bg-white/5 p-0.5 shadow-sm">
-                        {[
-                          { value: 'light', label: 'Light' },
-                          { value: 'system', label: 'Auto' },
-                          { value: 'dark', label: 'Dark' },
-                        ].map((option) => {
-                          const isActive = themeMode === option.value;
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => {
-                                hapticFeedback('light');
-                                setThemeMode(option.value as any);
-                                setShowThemeOptions(false);
-                              }}
-                              className={`px-3 sm:px-4 py-1.5 text-ios-caption-1 rounded-full transition-colors ${
-                                isActive
-                                  ? 'bg-black dark:bg-white text-white dark:text-black'
-                                  : 'text-black/60 dark:text-white/60'
-                              }`}
-                            >
-                              {option.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
             {/* Categories Section */}
