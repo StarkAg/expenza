@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { hapticFeedback } from '../utils/haptics';
@@ -15,14 +16,19 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleClick = (href: string) => {
     hapticFeedback('light');
-    // Clear edit data when clicking Add tab to ensure new entry
-    if (href === '/add' && typeof window !== 'undefined') {
-      sessionStorage.removeItem('editExpense');
-    }
-    router.push(href);
+    
+    // Use transition for smooth navigation
+    startTransition(() => {
+      // Clear edit data when clicking Add tab to ensure new entry
+      if (href === '/add' && typeof window !== 'undefined') {
+        sessionStorage.removeItem('editExpense');
+      }
+      router.push(href);
+    });
   };
 
   return (

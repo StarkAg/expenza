@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSupabase } from '../providers';
 import BottomNav from '../components/BottomNav';
@@ -14,6 +14,7 @@ export default function AddExpensePage() {
   const router = useRouter();
   const pathname = usePathname();
   const { supabase, username } = useSupabase();
+  const [isPending, startTransition] = useTransition();
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -197,6 +198,7 @@ export default function AddExpensePage() {
           setCategory(expense.category);
           setNote(expense.note || '');
           setDate(expense.date);
+          setSelectedAccountId(expense.account_id || '');
           setPadMode(false); // Use manual form for editing
         } catch (error) {
           console.error('Error parsing expense data:', error);
@@ -302,6 +304,7 @@ export default function AddExpensePage() {
       category: exp.category.trim() || '',
       note: exp.note || null,
       date: expenseDate,
+      account_id: selectedAccountId || null,
     }));
 
     try {
@@ -341,7 +344,11 @@ export default function AddExpensePage() {
       // Clear pad input and reset
       setPadInput('');
       hapticFeedback('light');
-      router.push('/transactions');
+      
+      // Use transition for smooth navigation
+      startTransition(() => {
+        router.push('/transactions');
+      });
     } catch (error) {
       console.error('Error adding expenses:', error);
       hapticFeedback('medium');
@@ -366,18 +373,78 @@ export default function AddExpensePage() {
 
     try {
       if (editingExpense) {
+        // Reverse old payment if expense had an account
+        if (editingExpense.account_id && typeof window !== 'undefined' && navigator.onLine) {
+          const oldAccount = accounts.find((acc) => acc.id === editingExpense.account_id);
+          if (oldAccount && oldAccount.type === 'bank') {
+            const oldAmount = parseFloat(editingExpense.amount);
+            const oldBalance = parseFloat(oldAccount.balance);
+            const reversedBalance = oldBalance + oldAmount; // Credit back
+            
+            const { error: reverseError } = await supabase
+              .from('accounts')
+              .update({ balance: reversedBalance })
+              .eq('id', editingExpense.account_id)
+              .eq('username', username);
+            if (reverseError) {
+              console.error('Error reversing old payment:', reverseError);
+            }
+          }
+        }
+        
         // Update existing expense
         if (typeof window !== 'undefined' && navigator.onLine) {
+          const updateData = {
+            ...expenseData,
+            account_id: selectedAccountId || null,
+          };
           const { error } = await supabase
             .from('expenses')
-            .update(expenseData)
+            .update(updateData)
             .eq('id', editingExpense.id)
             .eq('username', username);
           if (error) throw error;
+          
+          // Debit from new account if different account is selected
+          if (selectedAccountId && selectedAccountId !== editingExpense.account_id) {
+            const newAccount = accounts.find((acc) => acc.id === selectedAccountId);
+            if (newAccount && newAccount.type === 'bank') {
+              const newAmount = parseFloat(amount);
+              const newBalance = parseFloat(newAccount.balance) - newAmount;
+              const { error: accountError } = await supabase
+                .from('accounts')
+                .update({ balance: newBalance })
+                .eq('id', selectedAccountId)
+                .eq('username', username);
+              if (accountError) {
+                console.error('Error updating new account balance:', accountError);
+              }
+            }
+          } else if (selectedAccountId && selectedAccountId === editingExpense.account_id) {
+            // Same account, debit the new amount (we already credited back the old amount)
+            const newAmount = parseFloat(amount);
+            const account = accounts.find((acc) => acc.id === selectedAccountId);
+            if (account && account.type === 'bank') {
+              // Current balance already has old amount credited, now debit new amount
+              const currentBalance = parseFloat(account.balance);
+              const adjustedBalance = currentBalance - newAmount;
+              const { error: accountError } = await supabase
+                .from('accounts')
+                .update({ balance: adjustedBalance })
+                .eq('id', selectedAccountId)
+                .eq('username', username);
+              if (accountError) {
+                console.error('Error adjusting account balance:', accountError);
+              }
+            }
+          }
+          
+          // Reload accounts to update the balance in UI
+          await loadAccounts();
         } else if (typeof window !== 'undefined') {
           // Store update for offline sync
           const pendingUpdates = JSON.parse(localStorage.getItem('pendingExpenseUpdates') || '[]');
-          pendingUpdates.push({ id: editingExpense.id, ...expenseData });
+          pendingUpdates.push({ id: editingExpense.id, ...expenseData, account_id: selectedAccountId || null });
           localStorage.setItem('pendingExpenseUpdates', JSON.stringify(pendingUpdates));
         }
       } else {
@@ -385,6 +452,7 @@ export default function AddExpensePage() {
         const newExpenseData = {
           username: username,
           ...expenseData,
+          account_id: selectedAccountId || null,
         };
 
       if (typeof window !== 'undefined' && navigator.onLine) {
@@ -431,7 +499,11 @@ export default function AddExpensePage() {
       setEditingExpense(null);
 
       hapticFeedback('light');
-      router.push('/transactions');
+      
+      // Use transition for smooth navigation
+      startTransition(() => {
+        router.push('/transactions');
+      });
     } catch (error) {
       console.error(`Error ${editingExpense ? 'updating' : 'adding'} expense:`, error);
       hapticFeedback('medium');

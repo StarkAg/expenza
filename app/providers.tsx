@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate';
+import { checkAndProcessFixedExpenses } from './utils/fixedExpenses';
 
 type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -86,6 +87,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     // Initial load
     updateUsername();
+
+    // Check and process fixed expenses daily
+    checkAndProcessFixedExpenses();
 
     // Listen for storage changes (when username is set in another tab)
     const handleStorageChange = (e: StorageEvent) => {

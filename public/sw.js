@@ -1,6 +1,7 @@
 // Service Worker for Expenza Expense Tracker
-const CACHE_NAME = 'expenza-v5';
-const STATIC_CACHE_NAME = 'expenza-static-v5';
+const CACHE_NAME = 'expenza-v6';
+const STATIC_CACHE_NAME = 'expenza-static-v6';
+const DATA_CACHE_NAME = 'expenza-data-v6';
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
@@ -20,7 +21,7 @@ self.addEventListener('activate', (event) => {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
+            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
               return caches.delete(cacheName);
             }
           })
@@ -136,6 +137,32 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Only use cache if network completely fails
         return caches.match(request);
+      })
+    );
+    return;
+  }
+  
+  // For API/data requests, use stale-while-revalidate strategy
+  if (url.pathname.includes('/api/') || url.pathname.includes('/_next/data/')) {
+    event.respondWith(
+      caches.open(DATA_CACHE_NAME).then((cache) => {
+        return fetch(request, {
+          cache: 'no-cache',
+          credentials: 'same-origin',
+        })
+          .then((networkResponse) => {
+            if (networkResponse.status === 200) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            return cache.match(request).then((cachedResponse) => {
+              return cachedResponse || new Response('{}', {
+                headers: { 'Content-Type': 'application/json' },
+              });
+            });
+          });
       })
     );
     return;

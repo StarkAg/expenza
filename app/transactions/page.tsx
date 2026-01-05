@@ -11,6 +11,7 @@ export default function TransactionsPage() {
   const router = useRouter();
   const { supabase, username, loading } = useSupabase();
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const [expensesLoading, setExpensesLoading] = useState(true);
 
   useEffect(() => {
