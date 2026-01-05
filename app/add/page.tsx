@@ -38,7 +38,32 @@ export default function AddExpensePage() {
     const handleUpdate = () => loadCategories();
     window.addEventListener('categoriesUpdated', handleUpdate);
     return () => window.removeEventListener('categoriesUpdated', handleUpdate);
-  }, []);
+  }, [username, supabase]);
+
+  // Subscribe to real-time category changes
+  useEffect(() => {
+    if (!username || !supabase) return;
+
+    const channel = supabase
+      .channel('categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories',
+          filter: `username=eq.${username}`,
+        },
+        () => {
+          loadCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [username, supabase]);
 
   useEffect(() => {
     if (username && showManage) {

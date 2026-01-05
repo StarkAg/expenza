@@ -46,8 +46,34 @@ export default function SettingsPage() {
     return () => window.removeEventListener('categoriesUpdated', handleUpdate);
   }, [username, supabase]);
 
-  const loadCategories = () => {
-    setCategoriesState(getCategories());
+  // Subscribe to real-time category changes
+  useEffect(() => {
+    if (!username || !supabase) return;
+
+    const channel = supabase
+      .channel('categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories',
+          filter: `username=eq.${username}`,
+        },
+        () => {
+          loadCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [username, supabase]);
+
+  const loadCategories = async () => {
+    const categories = await getCategories();
+    setCategoriesState(categories);
   };
 
   const loadAccounts = async () => {
@@ -114,10 +140,10 @@ export default function SettingsPage() {
     setEditValue('');
   };
 
-  const handleColorChange = (index: number, color: string) => {
+  const handleColorChange = async (index: number, color: string) => {
     hapticFeedback('light');
-    updateCategoryColor(categories[index].name, color);
-    loadCategories();
+    await updateCategoryColor(categories[index].name, color);
+    await loadCategories();
   };
 
   const handleCancelEdit = () => {
@@ -125,11 +151,11 @@ export default function SettingsPage() {
     setEditValue('');
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
     hapticFeedback('medium');
     if (confirm(`Delete category "${categories[index].name}"?`)) {
-      removeCategory(categories[index].name);
-      loadCategories();
+      await removeCategory(categories[index].name);
+      await loadCategories();
     }
   };
 

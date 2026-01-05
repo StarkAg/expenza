@@ -1,5 +1,7 @@
-// Category utilities with color support
-const CATEGORIES_STORAGE_KEY = 'expenza_categories';
+// Category utilities with Supabase sync support
+import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 const DEFAULT_CATEGORIES = [
   'Food',
   'Transport',
@@ -27,8 +29,25 @@ export const PRESET_COLORS = [
 ];
 
 export interface Category {
+  id?: string;
   name: string;
   color: string;
+  display_order?: number;
+}
+
+// Get Supabase client
+function getSupabaseClient(): SupabaseClient | null {
+  if (typeof window === 'undefined') return null;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return null;
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+// Get username from localStorage
+function getUsername(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('username');
 }
 
 function dispatchCategoriesUpdate() {
@@ -37,102 +56,246 @@ function dispatchCategoriesUpdate() {
   }
 }
 
-export function getCategories(): Category[] {
-  if (typeof window === 'undefined') {
-    return DEFAULT_CATEGORIES.map((name) => ({ name, color: PRESET_COLORS[0] }));
+// Get categories from Supabase (with localStorage fallback)
+export async function getCategories(): Promise<Category[]> {
+  const username = getUsername();
+  if (!username) {
+    // Return defaults if no username
+    return DEFAULT_CATEGORIES.map((name, index) => ({
+      name,
+      color: PRESET_COLORS[index % PRESET_COLORS.length],
+    }));
   }
-  const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-  if (storedCategories) {
-    const parsed = JSON.parse(storedCategories);
-    // Handle migration from string array to Category array
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      if (typeof parsed[0] === 'string') {
-        // Old format - migrate to new format
-        const migrated = parsed.map((name: string, index: number) => ({
-          name,
-          color: PRESET_COLORS[index % PRESET_COLORS.length],
+
+  const supabase = getSupabaseClient();
+  
+  // Try Supabase first
+  if (supabase && navigator.onLine) {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('username', username)
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        // Sync to localStorage for offline access
+        const categories = data.map((cat) => ({
+          name: cat.name,
+          color: cat.color,
+          id: cat.id,
+          display_order: cat.display_order,
         }));
-        setCategories(migrated);
-        return migrated;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`categories_${username}`, JSON.stringify(categories));
+        }
+        return categories;
       }
-      return parsed;
+    } catch (error) {
+      console.error('Error fetching categories from Supabase:', error);
     }
   }
-  // Return default categories with colors
-  return DEFAULT_CATEGORIES.map((name, index) => ({
+
+  // Fallback to localStorage
+  if (typeof window !== 'undefined') {
+    const storedCategories = localStorage.getItem(`categories_${username}`);
+    if (storedCategories) {
+      try {
+        const parsed = JSON.parse(storedCategories);
+        // Handle migration from old format
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (typeof parsed[0] === 'string') {
+            // Old format - migrate to new format
+            const migrated = parsed.map((name: string, index: number) => ({
+              name,
+              color: PRESET_COLORS[index % PRESET_COLORS.length],
+            }));
+            // Save migrated format
+            localStorage.setItem(`categories_${username}`, JSON.stringify(migrated));
+            // Try to sync to Supabase
+            syncCategoriesToSupabase(migrated, username);
+            return migrated;
+          }
+          return parsed;
+        }
+      } catch (error) {
+        console.error('Error parsing stored categories:', error);
+      }
+    }
+  }
+
+  // Return defaults
+  const defaults = DEFAULT_CATEGORIES.map((name, index) => ({
     name,
     color: PRESET_COLORS[index % PRESET_COLORS.length],
   }));
+  
+  // Initialize defaults in Supabase
+  if (supabase && navigator.onLine) {
+    syncCategoriesToSupabase(defaults, username);
+  }
+  
+  return defaults;
 }
 
+// Sync categories to Supabase
+async function syncCategoriesToSupabase(categories: Category[], username: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase || !navigator.onLine) return;
+
+  try {
+    // Delete existing categories for this user
+    await supabase.from('categories').delete().eq('username', username);
+
+    // Insert new categories
+    const categoriesToInsert = categories.map((cat, index) => ({
+      username,
+      name: cat.name,
+      color: cat.color,
+      display_order: index,
+    }));
+
+    if (categoriesToInsert.length > 0) {
+      await supabase.from('categories').insert(categoriesToInsert);
+    }
+  } catch (error) {
+    console.error('Error syncing categories to Supabase:', error);
+  }
+}
+
+// Get category names (synchronous version for compatibility)
 export function getCategoryNames(): string[] {
-  return getCategories().map((cat) => cat.name);
-}
+  // This is a synchronous function, so we'll use localStorage as fallback
+  const username = getUsername();
+  if (!username) {
+    return DEFAULT_CATEGORIES;
+  }
 
-export function setCategories(categories: Category[]) {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-    dispatchCategoriesUpdate();
+    const storedCategories = localStorage.getItem(`categories_${username}`);
+    if (storedCategories) {
+      try {
+        const parsed = JSON.parse(storedCategories);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (typeof parsed[0] === 'string') {
+            return parsed;
+          }
+          return parsed.map((cat: Category) => cat.name);
+        }
+      } catch (error) {
+        console.error('Error parsing stored categories:', error);
+      }
+    }
   }
+
+  return DEFAULT_CATEGORIES;
 }
 
-export function addCategory(category: Category) {
-  const currentCategories = getCategories();
+export async function setCategories(categories: Category[]) {
+  const username = getUsername();
+  if (!username) return;
+
+  // Save to localStorage immediately for instant UI update
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(`categories_${username}`, JSON.stringify(categories));
+  }
+
+  // Sync to Supabase
+  await syncCategoriesToSupabase(categories, username);
+  
+  dispatchCategoriesUpdate();
+}
+
+export async function addCategory(category: Category) {
+  const currentCategories = await getCategories();
   if (!currentCategories.some((cat) => cat.name.toLowerCase() === category.name.toLowerCase())) {
-    setCategories([...currentCategories, category]);
+    await setCategories([...currentCategories, category]);
   }
 }
 
-export function updateCategory(oldCategory: Category, newCategory: Category) {
-  const currentCategories = getCategories();
+export async function updateCategory(oldCategory: Category, newCategory: Category) {
+  const currentCategories = await getCategories();
   const updatedCategories = currentCategories.map((cat) =>
     cat.name === oldCategory.name ? newCategory : cat
   );
-  setCategories(updatedCategories);
+  await setCategories(updatedCategories);
 }
 
-export function updateCategoryName(oldName: string, newName: string) {
-  const currentCategories = getCategories();
-  const oldCategory = currentCategories.find((cat) => cat.name === oldName);
-  if (oldCategory) {
-    const updatedCategories = currentCategories.map((cat) =>
-      cat.name === oldName ? { ...cat, name: newName } : cat
-    );
-    setCategories(updatedCategories);
-  }
+export async function updateCategoryName(oldName: string, newName: string) {
+  const currentCategories = await getCategories();
+  const updatedCategories = currentCategories.map((cat) =>
+    cat.name === oldName ? { ...cat, name: newName } : cat
+  );
+  await setCategories(updatedCategories);
 }
 
-export function updateCategoryColor(categoryName: string, color: string) {
-  const currentCategories = getCategories();
+export async function updateCategoryColor(categoryName: string, color: string) {
+  const currentCategories = await getCategories();
   const updatedCategories = currentCategories.map((cat) =>
     cat.name === categoryName ? { ...cat, color } : cat
   );
-  setCategories(updatedCategories);
+  await setCategories(updatedCategories);
 }
 
-export function removeCategory(categoryName: string) {
-  const currentCategories = getCategories();
+export async function removeCategory(categoryName: string) {
+  const currentCategories = await getCategories();
   const updatedCategories = currentCategories.filter((cat) => cat.name !== categoryName);
-  setCategories(updatedCategories);
+  await setCategories(updatedCategories);
 }
 
-export function reorderCategories(startIndex: number, endIndex: number) {
-  const currentCategories = getCategories();
+export async function reorderCategories(startIndex: number, endIndex: number) {
+  const currentCategories = await getCategories();
   const result = Array.from(currentCategories);
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
-  setCategories(result);
+  await setCategories(result);
 }
 
-export function resetCategories() {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(CATEGORIES_STORAGE_KEY);
-    dispatchCategoriesUpdate();
+export async function resetCategories() {
+  const username = getUsername();
+  if (!username) return;
+
+  const supabase = getSupabaseClient();
+  if (supabase && navigator.onLine) {
+    try {
+      await supabase.from('categories').delete().eq('username', username);
+    } catch (error) {
+      console.error('Error resetting categories in Supabase:', error);
+    }
   }
+
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(`categories_${username}`);
+  }
+
+  dispatchCategoriesUpdate();
 }
 
 export function getCategoryColor(categoryName: string): string {
-  const categories = getCategories();
-  const category = categories.find((cat) => cat.name === categoryName);
-  return category?.color || PRESET_COLORS[0];
+  // Synchronous version using localStorage
+  const username = getUsername();
+  if (!username) return PRESET_COLORS[0];
+
+  if (typeof window !== 'undefined') {
+    const storedCategories = localStorage.getItem(`categories_${username}`);
+    if (storedCategories) {
+      try {
+        const parsed = JSON.parse(storedCategories);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (typeof parsed[0] === 'string') {
+            // Old format
+            const index = parsed.indexOf(categoryName);
+            return PRESET_COLORS[index % PRESET_COLORS.length] || PRESET_COLORS[0];
+          }
+          const category = parsed.find((cat: Category) => cat.name === categoryName);
+          return category?.color || PRESET_COLORS[0];
+        }
+      } catch (error) {
+        console.error('Error parsing stored categories:', error);
+      }
+    }
+  }
+
+  return PRESET_COLORS[0];
 }
