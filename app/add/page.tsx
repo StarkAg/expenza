@@ -441,10 +441,10 @@ export default function AddExpensePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-black">
-      <main className="flex-1 overflow-hidden pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-32 sm:pb-36">
-          <div className="flex justify-between items-center mb-2 sm:mb-3">
+    <div className="flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
+      <main className="flex-1 overflow-hidden pb-safe-bottom flex flex-col">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="flex justify-between items-center mb-2 sm:mb-3 flex-shrink-0">
             {!editingExpense && (
               <div className="flex gap-2">
                 <button
@@ -517,7 +517,7 @@ export default function AddExpensePage() {
           </div>
 
           {showManage && (
-            <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
+            <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6 flex-1 min-h-0 overflow-y-auto">
               {/* Accounts Section */}
               <div>
                 <h2 className="text-ios-title-3 text-black dark:text-white mb-3">Accounts</h2>
@@ -689,10 +689,10 @@ export default function AddExpensePage() {
           )}
 
           {!showManage && (
-            <>
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {padMode ? (
-            <div className="flex flex-col">
-              <form onSubmit={handlePadSubmit} className="flex flex-col">
+            <div className="flex flex-col flex-1 min-h-0">
+              <form onSubmit={handlePadSubmit} className="flex flex-col flex-1 min-h-0">
                 <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-2">
                   Quick Entry
                 </label>
@@ -874,7 +874,7 @@ export default function AddExpensePage() {
             </div>
           </form>
           )}
-          </>
+          </div>
           )}
         </div>
       </main>
