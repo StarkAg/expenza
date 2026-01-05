@@ -21,7 +21,7 @@ import ColorPicker from '../components/ColorPicker';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { supabase, username } = useSupabase();
+  const { supabase, username, themeMode, setThemeMode } = useSupabase() as any;
   const [categories, setCategoriesState] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -288,6 +288,44 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
+
+                {/* Appearance / Theme Mode */}
+                <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h2 className="text-ios-title-3 text-black dark:text-white">Appearance</h2>
+                      <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mt-0.5">
+                        Choose light, dark, or follow system
+                      </p>
+                    </div>
+                  </div>
+                  <div className="inline-flex rounded-full bg-black/5 dark:bg-white/5 p-0.5">
+                    {[
+                      { value: 'light', label: 'Light' },
+                      { value: 'system', label: 'Auto' },
+                      { value: 'dark', label: 'Dark' },
+                    ].map((option) => {
+                      const isActive = themeMode === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            hapticFeedback('light');
+                            setThemeMode(option.value as any);
+                          }}
+                          className={`px-3 sm:px-4 py-1.5 text-ios-body rounded-full transition-colors ${
+                            isActive
+                              ? 'bg-black dark:bg-white text-white dark:text-black'
+                              : 'text-black/60 dark:text-white/60'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
             {/* Categories Section */}
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">

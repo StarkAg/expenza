@@ -5,10 +5,14 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate';
 
+type ThemeMode = 'light' | 'dark' | 'system';
+
 const SupabaseContext = createContext<{
   supabase: SupabaseClient;
   username: string | null;
   loading: boolean;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
 } | null>(null);
 
 export function useSupabase() {
@@ -31,6 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -60,6 +65,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setLoading(false);
     };
 
+    // Load theme preference from localStorage
+    const storedTheme = localStorage.getItem('theme_mode') as ThemeMode | null;
+    if (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system') {
+      setThemeModeState(storedTheme);
+    }
+
     // Initial load
     updateUsername();
 
@@ -78,11 +89,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('username-updated', handleUsernameUpdate);
 
-    // Dark mode detection
+    // Dark mode detection (system)
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setDarkMode(mediaQuery.matches);
+    const applySystemTheme = () => {
+      if (themeMode === 'system') {
+        setDarkMode(mediaQuery.matches);
+      }
+    };
 
-    const handleChange = (e: MediaQueryListEvent) => setDarkMode(e.matches);
+    applySystemTheme();
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (themeMode === 'system') {
+        setDarkMode(e.matches);
+      }
+    };
     mediaQuery.addEventListener('change', handleChange);
 
     return () => {
@@ -90,7 +111,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
       window.removeEventListener('username-updated', handleUsernameUpdate);
       mediaQuery.removeEventListener('change', handleChange);
     };
-  }, []);
+  }, [themeMode]);
+
+  // Public setter that also persists to localStorage
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme_mode', mode);
+    }
+
+    if (mode === 'light') {
+      setDarkMode(false);
+    } else if (mode === 'dark') {
+      setDarkMode(true);
+    } else if (mode === 'system' && typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      setDarkMode(mediaQuery.matches);
+    }
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -101,7 +139,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [darkMode]);
 
   return (
-    <SupabaseContext.Provider value={{ supabase, username, loading }}>
+    <SupabaseContext.Provider value={{ supabase, username, loading, themeMode, setThemeMode }}>
       {children}
     </SupabaseContext.Provider>
   );
