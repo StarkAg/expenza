@@ -67,8 +67,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     // Load theme preference from localStorage
     const storedTheme = localStorage.getItem('theme_mode') as ThemeMode | null;
-    if (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system') {
-      setThemeModeState(storedTheme);
+    const initialTheme: ThemeMode = (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system') 
+      ? storedTheme 
+      : 'system';
+    
+    setThemeModeState(initialTheme);
+
+    // Apply theme immediately based on stored preference
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (initialTheme === 'light') {
+      setDarkMode(false);
+    } else if (initialTheme === 'dark') {
+      setDarkMode(true);
+    } else {
+      // system mode
+      setDarkMode(mediaQuery.matches);
     }
 
     // Initial load
@@ -78,6 +91,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'username') {
         setUsername(e.newValue);
+      } else if (e.key === 'theme_mode') {
+        // Reload theme if changed in another tab
+        const newTheme = e.newValue as ThemeMode | null;
+        if (newTheme === 'light' || newTheme === 'dark' || newTheme === 'system') {
+          setThemeModeState(newTheme);
+          if (newTheme === 'light') {
+            setDarkMode(false);
+          } else if (newTheme === 'dark') {
+            setDarkMode(true);
+          } else {
+            setDarkMode(mediaQuery.matches);
+          }
+        }
       }
     };
     
@@ -89,29 +115,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('username-updated', handleUsernameUpdate);
 
-    // Dark mode detection (system)
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const applySystemTheme = () => {
-      if (themeMode === 'system') {
-        setDarkMode(mediaQuery.matches);
-      }
-    };
-
-    applySystemTheme();
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (themeMode === 'system') {
+    // Dark mode detection (system) - listen for system theme changes
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      // Only update if current theme mode is 'system'
+      const currentTheme = localStorage.getItem('theme_mode') as ThemeMode | null;
+      if (currentTheme === 'system') {
         setDarkMode(e.matches);
       }
     };
-    mediaQuery.addEventListener('change', handleChange);
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('username-updated', handleUsernameUpdate);
-      mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.removeEventListener('change', handleSystemThemeChange);
     };
-  }, [themeMode]);
+  }, []); // Run only once on mount
 
   // Public setter that also persists to localStorage
   const setThemeMode = (mode: ThemeMode) => {
