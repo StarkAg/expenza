@@ -76,11 +76,13 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit }: Exp
     <div className="space-y-3">
       {expenses.map((expense) => {
         const isExpanded = expandedId === expense.id;
+        const categoryColor = expense.category ? getCategoryColor(expense.category) : '#000000';
         return (
           <div
             key={expense.id}
             onClick={() => handleClick(expense.id)}
-            className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios p-4 cursor-pointer active:opacity-80 transition-opacity"
+            className="bg-white dark:bg-black border-l-4 rounded-ios p-4 cursor-pointer active:opacity-80 transition-opacity"
+            style={{ borderLeftColor: categoryColor }}
           >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
