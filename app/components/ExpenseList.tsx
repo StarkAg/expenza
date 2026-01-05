@@ -73,6 +73,15 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAdd
     }
   };
 
+  const handleAddToPrinter = (e: React.MouseEvent, expense: Expense) => {
+    e.stopPropagation();
+    hapticFeedback('light');
+    if (onAddToPrinter) {
+      onAddToPrinter(expense);
+      setExpandedId(null);
+    }
+  };
+
   // Helper function to check if a color is dark
   const isDarkColor = (color: string): boolean => {
     const hex = color.replace('#', '');
@@ -124,7 +133,7 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAdd
               {format(new Date(expense.date), 'MMM d, yyyy')}
             </p>
             {isExpanded && (
-              <div className={`flex gap-3 pt-2 border-t mt-2 ${darkColor ? 'border-white/20' : 'border-black/10'}`}>
+              <div className={`flex gap-2 flex-wrap pt-2 border-t mt-2 ${darkColor ? 'border-white/20' : 'border-black/10'}`}>
                 {onEdit && (
                   <button
                     onClick={(e) => handleEdit(e, expense)}
@@ -136,6 +145,19 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAdd
                   >
                     <EditIcon size={18} />
                     <span className="text-ios-body">Edit</span>
+                  </button>
+                )}
+                {onAddToPrinter && (
+                  <button
+                    onClick={(e) => handleAddToPrinter(e, expense)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-ios active:opacity-80 transition-opacity ${
+                      darkColor 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-black/5 text-black'
+                    }`}
+                  >
+                    <span className="text-lg">🖨️</span>
+                    <span className="text-ios-body">Printer</span>
                   </button>
                 )}
                 <button
