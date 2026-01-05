@@ -32,12 +32,20 @@ export default function AddExpensePage() {
   const [editingFixedExpense, setEditingFixedExpense] = useState<any | null>(null);
   const [accountBalance, setAccountBalance] = useState('');
   const [fixedExpenseAmount, setFixedExpenseAmount] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
 
   useEffect(() => {
     loadCategories();
     const handleUpdate = () => loadCategories();
     window.addEventListener('categoriesUpdated', handleUpdate);
     return () => window.removeEventListener('categoriesUpdated', handleUpdate);
+  }, [username, supabase]);
+
+  // Load accounts always (not just in manage mode)
+  useEffect(() => {
+    if (username) {
+      loadAccounts();
+    }
   }, [username, supabase]);
 
   // Subscribe to real-time category changes
@@ -67,10 +75,17 @@ export default function AddExpensePage() {
 
   useEffect(() => {
     if (username && showManage) {
-      loadAccounts();
       loadFixedExpenses();
     }
   }, [username, showManage, supabase]);
+
+  // Set first bank account as default when accounts are loaded
+  useEffect(() => {
+    const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
+    if (bankAccounts.length > 0 && !selectedAccountId) {
+      setSelectedAccountId(bankAccounts[0].id);
+    }
+  }, [accounts, selectedAccountId]);
 
   const loadCategories = () => {
     setCategories(getCategoryNames());
@@ -293,6 +308,29 @@ export default function AddExpensePage() {
       if (typeof window !== 'undefined' && navigator.onLine) {
         const { error } = await supabase.from('expenses').insert(expensesToInsert);
         if (error) throw error;
+
+        // Debit from selected bank account if one is selected
+        if (selectedAccountId) {
+          const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
+          if (selectedAccount && selectedAccount.type === 'bank') {
+            const totalAmount = validExpenses.reduce(
+              (sum, exp) => sum + parseFloat(exp.amount),
+              0
+            );
+            const newBalance = parseFloat(selectedAccount.balance) - totalAmount;
+            const { error: accountError } = await supabase
+              .from('accounts')
+              .update({ balance: newBalance })
+              .eq('id', selectedAccountId)
+              .eq('username', username);
+            if (accountError) {
+              console.error('Error updating account balance:', accountError);
+            } else {
+              // Reload accounts to update the balance in UI
+              await loadAccounts();
+            }
+          }
+        }
       } else if (typeof window !== 'undefined') {
         // Store offline for later sync
         const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
@@ -349,14 +387,34 @@ export default function AddExpensePage() {
           ...expenseData,
         };
 
-        if (typeof window !== 'undefined' && navigator.onLine) {
+      if (typeof window !== 'undefined' && navigator.onLine) {
           const { error } = await supabase.from('expenses').insert(newExpenseData);
-          if (error) throw error;
-        } else if (typeof window !== 'undefined') {
-          // Store offline for later sync
-          const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
+        if (error) throw error;
+
+        // Debit from selected bank account if one is selected
+        if (selectedAccountId) {
+          const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
+          if (selectedAccount && selectedAccount.type === 'bank') {
+            const expenseAmount = parseFloat(amount);
+            const newBalance = parseFloat(selectedAccount.balance) - expenseAmount;
+            const { error: accountError } = await supabase
+              .from('accounts')
+              .update({ balance: newBalance })
+              .eq('id', selectedAccountId)
+              .eq('username', username);
+            if (accountError) {
+              console.error('Error updating account balance:', accountError);
+            } else {
+              // Reload accounts to update the balance in UI
+              await loadAccounts();
+            }
+          }
+        }
+      } else if (typeof window !== 'undefined') {
+        // Store offline for later sync
+        const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
           pending.push(newExpenseData);
-          localStorage.setItem('pendingExpenses', JSON.stringify(pending));
+        localStorage.setItem('pendingExpenses', JSON.stringify(pending));
         }
       }
 
@@ -364,7 +422,7 @@ export default function AddExpensePage() {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('editExpense');
       }
-      
+
       // Reset form
       setAmount('');
       setCategory('');
@@ -605,6 +663,32 @@ export default function AddExpensePage() {
                 <label className="block text-ios-body font-semibold text-black dark:text-white mb-4">
                   Quick Entry
                 </label>
+                {(() => {
+                  const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
+                  if (bankAccounts.length > 0) {
+                    return (
+                      <div className="mb-4">
+                        <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                          Bank Account (optional)
+                        </label>
+                        <select
+                          value={selectedAccountId}
+                          onChange={(e) => setSelectedAccountId(e.target.value)}
+                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          disabled={loading}
+                        >
+                          <option value="">None</option>
+                          {bankAccounts.map((account) => (
+                            <option key={account.id} value={account.id}>
+                              {account.name} ({formatCurrency(account.balance)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 <textarea
                   value={padInput}
                   onChange={(e) => setPadInput(e.target.value)}
@@ -673,6 +757,33 @@ export default function AddExpensePage() {
                 ))}
               </select>
             </div>
+
+            {(() => {
+              const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
+              if (bankAccounts.length > 0) {
+                return (
+                  <div>
+                    <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                      Bank Account (optional)
+                    </label>
+                    <select
+                      value={selectedAccountId}
+                      onChange={(e) => setSelectedAccountId(e.target.value)}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                      disabled={loading}
+                    >
+                      <option value="">None</option>
+                      {bankAccounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.name} ({formatCurrency(account.balance)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             <div>
               <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
