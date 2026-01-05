@@ -102,6 +102,56 @@ export default function SettingsPage() {
     }
   };
 
+  const handleUpdateApp = async () => {
+    hapticFeedback('medium');
+    
+    if (!confirm('This will clear all cached data and force a fresh update from the server. Continue?')) {
+      return;
+    }
+
+    try {
+      // Step 1: Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map((cacheName) => caches.delete(cacheName))
+        );
+      }
+
+      // Step 2: Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(
+          registrations.map((registration) => {
+            // Unregister and wait for it to complete
+            return registration.unregister();
+          })
+        );
+      }
+
+      // Step 3: Force hard reload from server, bypassing all caches
+      // Wait a bit to ensure service worker is unregistered
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          // Add cache-busting parameter
+          const url = new URL(window.location.href);
+          url.searchParams.set('_hard_refresh', Date.now().toString());
+          
+          // Use replace to avoid adding to history, and force reload
+          window.location.replace(url.toString());
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error updating app:', error);
+      // Fallback: force reload with cache bypass
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('_hard_refresh', Date.now().toString());
+        window.location.replace(url.toString());
+      }
+    }
+  };
+
   const handleSignOut = async () => {
     hapticFeedback('medium');
     localStorage.removeItem('username');
@@ -626,6 +676,15 @@ export default function SettingsPage() {
                   )}
                 </>
               )}
+            </div>
+
+            <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
+              <button
+                onClick={handleUpdateApp}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-ios-body text-black dark:text-white active:bg-black/5 dark:active:bg-white/5"
+              >
+                Update App
+              </button>
             </div>
 
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
