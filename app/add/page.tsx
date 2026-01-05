@@ -443,7 +443,7 @@ export default function AddExpensePage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pb-20 sm:pb-24">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-24 sm:pb-28">
           <div className="flex justify-between items-center mb-2 sm:mb-3">
             {!editingExpense && (
               <div className="flex gap-2">
