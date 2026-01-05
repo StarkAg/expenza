@@ -133,15 +133,6 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleAddToPrinter = (expense: any) => {
-    hapticFeedback('light');
-    // Store expense data and navigate to printer page
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('printerExpense', JSON.stringify(expense));
-      router.push('/printer');
-    }
-  };
-
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
@@ -150,7 +141,7 @@ export default function TransactionsPage() {
             Transactions
           </h1>
 
-          <ExpenseList expenses={expenses} loading={expensesLoading} onDelete={handleDelete} onEdit={handleEdit} onAddToPrinter={handleAddToPrinter} />
+              <ExpenseList expenses={expenses} loading={expensesLoading} onDelete={handleDelete} onEdit={handleEdit} />
         </div>
       </main>
       <BottomNav />

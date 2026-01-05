@@ -21,10 +21,9 @@ interface ExpenseListProps {
   loading: boolean;
   onDelete: (id: string) => void;
   onEdit?: (expense: Expense) => void;
-  onAddToPrinter?: (expense: Expense) => void;
 }
 
-export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAddToPrinter }: ExpenseListProps) {
+export default function ExpenseList({ expenses, loading, onDelete, onEdit }: ExpenseListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading) {
@@ -69,15 +68,6 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAdd
     hapticFeedback('light');
     if (onEdit) {
       onEdit(expense);
-      setExpandedId(null);
-    }
-  };
-
-  const handleAddToPrinter = (e: React.MouseEvent, expense: Expense) => {
-    e.stopPropagation();
-    hapticFeedback('light');
-    if (onAddToPrinter) {
-      onAddToPrinter(expense);
       setExpandedId(null);
     }
   };
@@ -145,19 +135,6 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAdd
                   >
                     <EditIcon size={18} />
                     <span className="text-ios-body">Edit</span>
-                  </button>
-                )}
-                {onAddToPrinter && (
-                  <button
-                    onClick={(e) => handleAddToPrinter(e, expense)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-ios active:opacity-80 transition-opacity ${
-                      darkColor 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-black/5 text-black'
-                    }`}
-                  >
-                    <span className="text-lg">🖨️</span>
-                    <span className="text-ios-body">Printer</span>
                   </button>
                 )}
                 <button
