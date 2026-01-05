@@ -441,10 +441,10 @@ export default function AddExpensePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
-      <main className="flex-1 flex flex-col overflow-hidden pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-2 pb-2 flex-1 flex flex-col overflow-hidden">
-          <div className="flex justify-between items-center mb-1.5 flex-shrink-0">
+    <div className="flex flex-col h-screen bg-white dark:bg-black">
+      <main className="flex-1 overflow-hidden pb-safe-bottom">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-32 sm:pb-36">
+          <div className="flex justify-between items-center mb-2 sm:mb-3">
             {!editingExpense && (
               <div className="flex gap-2">
                 <button
@@ -453,7 +453,7 @@ export default function AddExpensePage() {
                     setShowManage(!showManage);
                     hapticFeedback('light');
                   }}
-                  className={`p-2 rounded-ios border transition-colors ${
+                  className={`p-2.5 sm:p-3 rounded-ios border transition-colors ${
                     showManage
                       ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                       : 'bg-white dark:bg-black text-black dark:text-white border-black/20 dark:border-white/20'
@@ -469,14 +469,14 @@ export default function AddExpensePage() {
                       setPadMode(!padMode);
                       hapticFeedback('light');
                     }}
-                    className={`p-2 rounded-ios border transition-colors ${
+                    className={`p-2.5 sm:p-3 rounded-ios border transition-colors ${
                       padMode
                         ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                         : 'bg-white dark:bg-black text-black dark:text-white border-black/20 dark:border-white/20'
                     }`}
                     aria-label="Toggle pad mode"
                   >
-                    <CalculatorIcon size={18} />
+                    <CalculatorIcon size={20} />
                   </button>
                 )}
               </div>
@@ -491,7 +491,7 @@ export default function AddExpensePage() {
                       handlePadSubmit(e as any);
                     }}
                     disabled={loading || !padInput.trim()}
-                    className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-ios-caption-1 font-semibold rounded-ios active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Adding...' : 'Add'}
                   </button>
@@ -503,7 +503,7 @@ export default function AddExpensePage() {
                       handleSubmit(e as any);
                     }}
                     disabled={loading || !amount || parseFloat(amount) <= 0}
-                    className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-ios-caption-1 font-semibold rounded-ios active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading
                       ? 'Adding...'
@@ -691,23 +691,23 @@ export default function AddExpensePage() {
           {!showManage && (
             <>
             {padMode ? (
-            <div className="flex flex-col flex-1 min-h-0">
-              <form id="pad-form" onSubmit={handlePadSubmit} className="flex flex-col flex-1 min-h-0">
-                <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1 flex-shrink-0">
+            <div className="flex flex-col">
+              <form onSubmit={handlePadSubmit} className="flex flex-col">
+                <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-2">
                   Quick Entry
                 </label>
                 {(() => {
                   const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
                   if (bankAccounts.length > 0) {
                     return (
-                      <div className="mb-1.5 flex-shrink-0">
-                        <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-0.5">
+                      <div className="mb-2">
+                        <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                           Bank Account (optional)
                         </label>
                         <select
                           value={selectedAccountId}
                           onChange={(e) => setSelectedAccountId(e.target.value)}
-                          className="w-full px-2 py-1.5 bg-white dark:bg-black text-ios-caption-1 text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                           disabled={loading}
                         >
                           <option value="">None</option>
@@ -730,19 +730,19 @@ export default function AddExpensePage() {
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="w-full flex-1 min-h-0 px-2 py-1.5 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full h-32 px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
               </form>
             </div>
           ) : (
-          <form id="manual-form" onSubmit={handleSubmit} className="flex flex-col space-y-1.5 flex-1 min-h-0 overflow-hidden">
-            <div className="flex-shrink-0">
-              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-0.5">
+          <form onSubmit={handleSubmit} className="space-y-2">
+            <div>
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Amount
               </label>
               <div className="relative">
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-ios-caption-1 text-black dark:text-white pointer-events-none">
+                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ios-body text-black dark:text-white pointer-events-none">
                   ₹
                 </div>
               <input
@@ -759,20 +759,20 @@ export default function AddExpensePage() {
                   }}
                 placeholder="0.00"
                 required
-                  className="w-full pl-6 pr-2 py-1.5 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full pl-7 pr-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               />
               </div>
             </div>
 
-            <div className="flex-shrink-0">
-              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-0.5">
+            <div>
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-2 py-1.5 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               >
                 <option value="">Select a category</option>
@@ -788,14 +788,14 @@ export default function AddExpensePage() {
               const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
               if (bankAccounts.length > 0) {
                 return (
-                  <div className="flex-shrink-0">
-                    <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-0.5">
+                  <div>
+                    <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                       Bank Account (optional)
                     </label>
                     <select
                       value={selectedAccountId}
                       onChange={(e) => setSelectedAccountId(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                      className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                       disabled={loading}
                     >
                       <option value="">None</option>
@@ -811,11 +811,11 @@ export default function AddExpensePage() {
               return null;
             })()}
 
-            <div className="flex-shrink-0">
-              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-0.5">
+            <div>
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Date
               </label>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -825,21 +825,21 @@ export default function AddExpensePage() {
                     setDate(previousDate.toISOString().split('T')[0]);
                   }}
                   disabled={loading}
-                  className="p-1.5 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
+                  className="p-2 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
                   aria-label="Previous day"
                 >
-                  <ChevronLeftIcon size={16} />
+                  <ChevronLeftIcon size={18} />
                 </button>
                 <div className="flex-1 relative">
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white appearance-none cursor-pointer pr-7"
+                    className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white appearance-none cursor-pointer pr-8"
                 disabled={loading}
               />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-black/40 dark:text-white/40">
-                    <CalendarIcon size={14} />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-black/40 dark:text-white/40">
+                    <CalendarIcon size={16} />
                   </div>
                 </div>
                 <button
@@ -851,24 +851,24 @@ export default function AddExpensePage() {
                     setDate(nextDate.toISOString().split('T')[0]);
                   }}
                   disabled={loading}
-                  className="p-1.5 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
+                  className="p-2 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
                   aria-label="Next day"
                 >
-                  <ChevronRightIcon size={16} />
+                  <ChevronRightIcon size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="flex-shrink-0">
-              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-0.5">
+            <div>
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Note (optional)
               </label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Add a note..."
-                rows={1}
-                className="w-full px-2 py-1.5 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                rows={2}
+                className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 disabled={loading}
               />
             </div>
