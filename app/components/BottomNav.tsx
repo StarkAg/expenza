@@ -6,10 +6,9 @@ import { hapticFeedback } from '../utils/haptics';
 import { HomeIcon, AddIcon, StatsIcon, SettingsIcon, TransactionsIcon } from './Icons';
 
 const navItems = [
-  { href: '/', label: 'Home', Icon: HomeIcon },
+  { href: '/stats', label: 'Stats', Icon: StatsIcon },
   { href: '/transactions', label: 'Transactions', Icon: TransactionsIcon },
   { href: '/add', label: 'Add', Icon: AddIcon },
-  { href: '/stats', label: 'Stats', Icon: StatsIcon },
   { href: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
@@ -30,7 +29,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black backdrop-blur-xl border-t border-black/10 dark:border-white/10 pb-safe-bottom z-50">
       <div className="w-full max-w-md lg:max-w-2xl mx-auto flex justify-around items-center h-14 sm:h-16 px-2 sm:px-4">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (pathname === '/' && item.href === '/stats');
           const Icon = item.Icon;
           return (
             <button

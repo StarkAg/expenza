@@ -12,6 +12,6 @@ export async function GET(request: NextRequest) {
     // The callback route is kept for compatibility but doesn't do anything
   }
 
-  return NextResponse.redirect(new URL('/', requestUrl.origin));
+  return NextResponse.redirect(new URL('/stats', requestUrl.origin));
 }
 

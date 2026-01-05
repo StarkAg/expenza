@@ -51,7 +51,7 @@ export default function AuthPage() {
       // Wait a tick to ensure context updates before redirect
       hapticFeedback('light');
       await new Promise(resolve => setTimeout(resolve, 150));
-      router.push('/');
+      router.push('/stats');
     } catch (error: any) {
       console.error('Sign in error:', error);
       setMessage('Failed to sign in. Please try again.');
