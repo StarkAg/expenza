@@ -33,6 +33,9 @@ body {
   -webkit-overflow-scrolling: touch;
   /* Responsive base font size */
   font-size: 16px;
+  /* Hide scrollbars (Firefox / legacy Edge) */
+  -ms-overflow-style: none; /* IE and old Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 @media (max-width: 374px) {
@@ -170,10 +173,16 @@ textarea {
   user-select: text;
 }
 
-/* iOS-style scrollbar */
+/* Hide scrollbars globally (WebKit) */
 ::-webkit-scrollbar {
   width: 0;
+  height: 0;
   background: transparent;
+}
+
+/* Ensure all scrollable elements hide scrollbars but still scroll */
+* {
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Smooth transitions - optimized for performance */
