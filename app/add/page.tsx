@@ -712,14 +712,14 @@ export default function AddExpensePage() {
                   const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
                   if (bankAccounts.length > 0) {
                     return (
-                      <div className="mb-2">
-                        <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
+                      <div className="mb-2 flex flex-col items-center">
+                        <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1 w-[98%]">
                           Bank Account (optional)
                         </label>
                         <select
                           value={selectedAccountId}
                           onChange={(e) => setSelectedAccountId(e.target.value)}
-                          className="w-[98%] mx-auto px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          className="w-[98%] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                           disabled={loading}
                         >
                           <option value="">None</option>
@@ -742,7 +742,7 @@ export default function AddExpensePage() {
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="w-[98%] mx-auto h-[400px] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-[98%] h-[400px] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
               </form>

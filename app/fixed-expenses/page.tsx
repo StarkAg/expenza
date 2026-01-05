@@ -218,11 +218,30 @@ export default function FixedExpensesPage() {
 
           {!showForm && (
             <>
-              <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4 mb-4 sm:mb-6">
-                <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-1">
-                  Total Monthly
-                </p>
-                <p className="text-ios-title-1 text-black dark:text-white">{formatCurrency(totalMonthly)}</p>
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4 flex-1">
+                  <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-1">
+                    Total Monthly
+                  </p>
+                  <p className="text-ios-title-1 text-black dark:text-white">{formatCurrency(totalMonthly)}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowForm(true);
+                    setEditingExpense(null);
+                    setName('');
+                    setAmount('');
+                    setCategory(categories[0] || '');
+                    setDayOfMonth('1');
+                    setAccountId('');
+                    setIsActive(true);
+                    setNote('');
+                    hapticFeedback('light');
+                  }}
+                  className="ml-3 px-4 sm:px-6 py-3 sm:py-4 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80"
+                >
+                  + Add
+                </button>
               </div>
 
               <FixedExpensesList fixedExpenses={fixedExpenses} loading={loading} />
