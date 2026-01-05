@@ -8,6 +8,7 @@ import AccountsList from '../components/AccountsList';
 import FixedExpensesList from '../components/FixedExpensesList';
 import ExpenseLineChart from '../components/ExpenseLineChart';
 import { formatCurrency } from '../utils/currency';
+import { getCategoryColor } from '../utils/categories';
 import { startOfMonth, endOfMonth, format, isSameDay, parseISO, startOfDay, endOfDay } from 'date-fns';
 
 export default function StatsPage() {
