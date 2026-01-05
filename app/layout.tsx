@@ -48,10 +48,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Preload critical CSS */}
-        <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
-      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <CSSReloader />
         <Providers>
