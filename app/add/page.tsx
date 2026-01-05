@@ -444,7 +444,7 @@ export default function AddExpensePage() {
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pb-20 sm:pb-24">
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <div className="flex justify-between items-center mb-2 sm:mb-3">
             {!editingExpense && (
               <div className="flex gap-2">
                 <button
@@ -691,23 +691,23 @@ export default function AddExpensePage() {
           {!showManage && (
             <>
             {padMode ? (
-            <div className="flex flex-col h-[calc(100vh-10rem)] sm:h-[calc(100vh-12rem)]">
-              <form onSubmit={handlePadSubmit} className="flex flex-col flex-1">
-                <label className="block text-ios-body font-semibold text-black dark:text-white mb-4">
+            <div className="flex flex-col">
+              <form onSubmit={handlePadSubmit} className="flex flex-col">
+                <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-2">
                   Quick Entry
                 </label>
                 {(() => {
                   const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
                   if (bankAccounts.length > 0) {
                     return (
-                      <div className="mb-4">
-                        <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                      <div className="mb-2">
+                        <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                           Bank Account (optional)
                         </label>
                         <select
                           value={selectedAccountId}
                           onChange={(e) => setSelectedAccountId(e.target.value)}
-                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                           disabled={loading}
                         >
                           <option value="">None</option>
@@ -730,19 +730,19 @@ export default function AddExpensePage() {
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="flex-1 min-h-[400px] px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full h-[calc(100vh-20rem)] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
               </form>
             </div>
           ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-2">
             <div>
-              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Amount
               </label>
               <div className="relative">
-                <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-ios-title-2 text-black dark:text-white pointer-events-none">
+                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ios-body text-black dark:text-white pointer-events-none">
                   ₹
                 </div>
               <input
@@ -759,20 +759,20 @@ export default function AddExpensePage() {
                   }}
                 placeholder="0.00"
                 required
-                  className="w-full pl-8 sm:pl-10 pr-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-title-2 text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full pl-7 pr-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               />
               </div>
             </div>
 
             <div>
-              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 disabled={loading}
               >
                 <option value="">Select a category</option>
@@ -789,13 +789,13 @@ export default function AddExpensePage() {
               if (bankAccounts.length > 0) {
                 return (
                   <div>
-                    <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                    <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                       Bank Account (optional)
                     </label>
                     <select
                       value={selectedAccountId}
                       onChange={(e) => setSelectedAccountId(e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                      className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                       disabled={loading}
                     >
                       <option value="">None</option>
@@ -812,10 +812,10 @@ export default function AddExpensePage() {
             })()}
 
             <div>
-              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Date
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -825,21 +825,21 @@ export default function AddExpensePage() {
                     setDate(previousDate.toISOString().split('T')[0]);
                   }}
                   disabled={loading}
-                  className="p-2.5 sm:p-3 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
+                  className="p-2 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
                   aria-label="Previous day"
                 >
-                  <ChevronLeftIcon size={20} />
+                  <ChevronLeftIcon size={18} />
                 </button>
                 <div className="flex-1 relative">
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white appearance-none cursor-pointer pr-10"
+                    className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white appearance-none cursor-pointer pr-8"
                 disabled={loading}
               />
-                  <div className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black/40 dark:text-white/40">
-                    <CalendarIcon size={18} />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-black/40 dark:text-white/40">
+                    <CalendarIcon size={16} />
                   </div>
                 </div>
                 <button
@@ -851,24 +851,24 @@ export default function AddExpensePage() {
                     setDate(nextDate.toISOString().split('T')[0]);
                   }}
                   disabled={loading}
-                  className="p-2.5 sm:p-3 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
+                  className="p-2 bg-white dark:bg-black border border-black/20 dark:border-white/20 rounded-ios text-black dark:text-white active:opacity-80 transition-opacity disabled:opacity-50 flex-shrink-0"
                   aria-label="Next day"
                 >
-                  <ChevronRightIcon size={20} />
+                  <ChevronRightIcon size={18} />
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+              <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Note (optional)
               </label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Add a note..."
-                rows={3}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                rows={2}
+                className="w-full px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 disabled={loading}
               />
             </div>
