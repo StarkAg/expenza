@@ -12,6 +12,17 @@ const DEFAULT_CATEGORIES = [
   'Other',
 ];
 
+// Default colors for each category (one color per category)
+const DEFAULT_CATEGORY_COLORS: Record<string, string> = {
+  'Food': '#E23744',
+  'Transport': '#000000',
+  'Shopping': '#9B870C',
+  'Bills': '#845EF7',
+  'Entertainment': '#51CF66',
+  'Health': '#FD7E14',
+  'Other': '#FF6B6B', // Default fallback color
+};
+
 // Preset aesthetic colors
 export const PRESET_COLORS = [
   '#FF6B6B', // Red
@@ -61,9 +72,9 @@ export async function getCategories(): Promise<Category[]> {
   const username = getUsername();
   if (!username) {
     // Return defaults if no username
-    return DEFAULT_CATEGORIES.map((name, index) => ({
+    return DEFAULT_CATEGORIES.map((name) => ({
       name,
-      color: PRESET_COLORS[index % PRESET_COLORS.length],
+      color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
     }));
   }
 
@@ -107,9 +118,9 @@ export async function getCategories(): Promise<Category[]> {
         if (Array.isArray(parsed) && parsed.length > 0) {
           if (typeof parsed[0] === 'string') {
             // Old format - migrate to new format
-            const migrated = parsed.map((name: string, index: number) => ({
+            const migrated = parsed.map((name: string) => ({
               name,
-              color: PRESET_COLORS[index % PRESET_COLORS.length],
+              color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
             }));
             // Save migrated format
             localStorage.setItem(`categories_${username}`, JSON.stringify(migrated));
@@ -126,9 +137,9 @@ export async function getCategories(): Promise<Category[]> {
   }
 
   // Return defaults
-  const defaults = DEFAULT_CATEGORIES.map((name, index) => ({
+  const defaults = DEFAULT_CATEGORIES.map((name) => ({
     name,
-    color: PRESET_COLORS[index % PRESET_COLORS.length],
+    color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
   }));
   
   // Initialize defaults in Supabase
@@ -284,9 +295,8 @@ export function getCategoryColor(categoryName: string): string {
         const parsed = JSON.parse(storedCategories);
         if (Array.isArray(parsed) && parsed.length > 0) {
           if (typeof parsed[0] === 'string') {
-            // Old format
-            const index = parsed.indexOf(categoryName);
-            return PRESET_COLORS[index % PRESET_COLORS.length] || PRESET_COLORS[0];
+            // Old format - use default category colors
+            return DEFAULT_CATEGORY_COLORS[categoryName] || DEFAULT_CATEGORY_COLORS['Other'];
           }
           const category = parsed.find((cat: Category) => cat.name === categoryName);
           return category?.color || PRESET_COLORS[0];
