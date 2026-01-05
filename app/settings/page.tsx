@@ -273,65 +273,94 @@ export default function SettingsPage() {
               </div>
               <div className="divide-y divide-black/10 dark:divide-white/10">
                 {categories.map((category, index) => (
-                  <div
-                    key={`${category}-${index}`}
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, index)}
-                    onDragEnd={handleDragEnd}
-                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-move transition-colors ${
-                      dragOverIndex === index
-                        ? 'bg-black/5 dark:bg-white/5'
-                        : 'bg-transparent'
-                    } ${draggedIndex === index ? 'opacity-50' : ''}`}
-                  >
-                    <div className="text-black/40 dark:text-white/40 flex-shrink-0">
-                      <GripVerticalIcon size={18} />
+                  <div key={`${category.name}-${index}`}>
+                    <div
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, index)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-move transition-colors ${
+                        dragOverIndex === index
+                          ? 'bg-black/5 dark:bg-white/5'
+                          : 'bg-transparent'
+                      } ${draggedIndex === index ? 'opacity-50' : ''}`}
+                    >
+                      <div className="text-black/40 dark:text-white/40 flex-shrink-0">
+                        <GripVerticalIcon size={18} />
+                      </div>
+                      {editingId === index ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={() => handleSaveEdit(index)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveEdit(index);
+                              } else if (e.key === 'Escape') {
+                                handleCancelEdit();
+                              }
+                            }}
+                            className="flex-1 px-2 py-1 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                            autoFocus
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            className="w-4 h-4 rounded-full border border-black/20 dark:border-white/20 flex-shrink-0"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="flex-1 text-ios-body text-black dark:text-white">
+                            {category.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                hapticFeedback('light');
+                                setEditingColorId(editingColorId === index ? null : index);
+                                setEditingId(null);
+                              }}
+                              className="p-1.5 text-black dark:text-white active:opacity-70"
+                              aria-label="Edit color"
+                              title="Edit color"
+                            >
+                              <div
+                                className="w-4 h-4 rounded-full border border-black/20 dark:border-white/20"
+                                style={{ backgroundColor: category.color }}
+                              />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit(index)}
+                              className="p-1.5 text-black dark:text-white active:opacity-70"
+                              aria-label="Edit category"
+                            >
+                              <EditIcon size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(index)}
+                              className="p-1.5 text-red-500 active:opacity-70"
+                              aria-label="Delete category"
+                            >
+                              <DeleteIcon size={16} />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    {editingId === index ? (
-                      <div className="flex-1 flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={() => handleSaveEdit(index)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleSaveEdit(index);
-                            } else if (e.key === 'Escape') {
-                              handleCancelEdit();
-                            }
-                          }}
-                          className="flex-1 px-2 py-1 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                          autoFocus
+                    {editingColorId === index && (
+                      <div className="px-3 sm:px-4 pb-3 bg-black/5 dark:bg-white/5 border-t border-black/10 dark:border-white/10">
+                        <ColorPicker
+                          value={category.color}
+                          onChange={(color) => handleColorChange(index, color)}
                         />
                       </div>
-                    ) : (
-                      <>
-                        <span className="flex-1 text-ios-body text-black dark:text-white">
-                          {category}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleStartEdit(index)}
-                            className="p-1.5 text-black dark:text-white active:opacity-70"
-                            aria-label="Edit category"
-                          >
-                            <EditIcon size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(index)}
-                            className="p-1.5 text-red-500 active:opacity-70"
-                            aria-label="Delete category"
-                          >
-                            <DeleteIcon size={16} />
-                          </button>
-                        </div>
-                      </>
                     )}
                   </div>
                 ))}
