@@ -39,7 +39,7 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
         {accounts.map((account) => (
           <div
             key={account.id}
-            className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios"
+            className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios w-full max-w-md mx-auto"
           >
             <div className="flex items-center gap-2">
               <span className="text-ios-body text-black/60 dark:text-white/60">
@@ -59,10 +59,10 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
           </div>
         ))}
       </div>
-      <div className="mt-3">
-        <div className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios">
+      <div className="mt-3 flex justify-center">
+        <div className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios w-full max-w-md">
           <span className="text-ios-body font-bold text-black dark:text-white">Total Balance</span>
-          <span className="text-ios-body font-bold text-black dark:text-white">
+          <span className="text-ios-body font-bold text-green-600 dark:text-green-400">
             {formatCurrency(totalBalance)}
           </span>
         </div>
