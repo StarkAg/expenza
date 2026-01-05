@@ -6,10 +6,10 @@ import { hapticFeedback } from '../utils/haptics';
 import { HomeIcon, AddIcon, StatsIcon, SettingsIcon, TransactionsIcon } from './Icons';
 
 const navItems = [
-  { href: '/', label: 'Stats', Icon: StatsIcon },
+  { href: '/', label: 'Home', Icon: HomeIcon },
   { href: '/transactions', label: 'Transactions', Icon: TransactionsIcon },
   { href: '/add', label: 'Add', Icon: AddIcon },
-  { href: '/stats', label: 'Home', Icon: HomeIcon },
+  { href: '/stats', label: 'Stats', Icon: StatsIcon },
   { href: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
