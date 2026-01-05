@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from './providers';
 import OfflineIndicator from './components/OfflineIndicator';
 import CSSReloader from './components/CSSReloader';
+import DesktopHeader from './components/DesktopHeader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -51,6 +52,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <CSSReloader />
         <Providers>
+          <DesktopHeader />
           <OfflineIndicator />
           {children}
         </Providers>
