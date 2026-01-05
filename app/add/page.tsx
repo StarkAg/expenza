@@ -365,11 +365,8 @@ export default function AddExpensePage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pb-20 sm:pb-24">
           <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <h1 className="text-ios-large-title text-black dark:text-white">
-              {showManage ? 'Manage' : editingExpense ? 'Edit Expense' : 'Add Expense'}
-          </h1>
             {!editingExpense && (
               <div className="flex gap-2">
                 <button

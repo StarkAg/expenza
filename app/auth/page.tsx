@@ -62,12 +62,6 @@ export default function AuthPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black px-3 sm:px-4 md:px-6">
       <div className="w-full max-w-md lg:max-w-lg">
-        <h1 className="text-ios-large-title text-black dark:text-white mb-2 text-center">
-          Expenza
-        </h1>
-        <p className="text-ios-body text-black/60 dark:text-white/60 mb-6 sm:mb-8 text-center">
-          Track your expenses effortlessly
-        </p>
 
         <div className="space-y-3 sm:space-y-4">
           <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">

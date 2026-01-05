@@ -35,6 +35,7 @@ export default function SettingsPage() {
   const [accountName, setAccountName] = useState('');
   const [accountType, setAccountType] = useState<'bank' | 'credit_card'>('bank');
   const [accountBalance, setAccountBalance] = useState('');
+  const [showThemeOptions, setShowThemeOptions] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -272,11 +273,7 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
-          <h1 className="text-ios-large-title text-black dark:text-white mb-4 sm:mb-6">
-            Settings
-          </h1>
-
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pb-20 sm:pb-24">
           <div className="space-y-3 sm:space-y-4">
             {username && (
               <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">
@@ -291,40 +288,73 @@ export default function SettingsPage() {
 
                 {/* Appearance / Theme Mode */}
                 <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-ios-title-3 text-black dark:text-white">Appearance</h2>
                       <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mt-0.5">
-                        Choose light, dark, or follow system
+                        Theme and dark mode
                       </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        hapticFeedback('light');
+                        setShowThemeOptions((prev) => {
+                          const next = !prev;
+                          if (next) {
+                            // Auto-collapse after a short delay
+                            setTimeout(() => {
+                              setShowThemeOptions(false);
+                            }, 2500);
+                          }
+                          return next;
+                        });
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/10 text-black/80 dark:text-white/80 text-ios-caption-1 active:opacity-80"
+                    >
+                      <span className="text-base">
+                        {themeMode === 'light' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌓'}
+                      </span>
+                      <span>
+                        {themeMode === 'light'
+                          ? 'Light'
+                          : themeMode === 'dark'
+                          ? 'Dark'
+                          : 'Auto'}
+                      </span>
+                    </button>
                   </div>
-                  <div className="inline-flex rounded-full bg-black/5 dark:bg-white/5 p-0.5">
-                    {[
-                      { value: 'light', label: 'Light' },
-                      { value: 'system', label: 'Auto' },
-                      { value: 'dark', label: 'Dark' },
-                    ].map((option) => {
-                      const isActive = themeMode === option.value;
-                      return (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => {
-                            hapticFeedback('light');
-                            setThemeMode(option.value as any);
-                          }}
-                          className={`px-3 sm:px-4 py-1.5 text-ios-body rounded-full transition-colors ${
-                            isActive
-                              ? 'bg-black dark:bg-white text-white dark:text-black'
-                              : 'text-black/60 dark:text-white/60'
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {showThemeOptions && (
+                    <div className="mt-3 flex justify-center">
+                      <div className="inline-flex rounded-full bg-black/5 dark:bg-white/5 p-0.5 shadow-sm">
+                        {[
+                          { value: 'light', label: 'Light' },
+                          { value: 'system', label: 'Auto' },
+                          { value: 'dark', label: 'Dark' },
+                        ].map((option) => {
+                          const isActive = themeMode === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                hapticFeedback('light');
+                                setThemeMode(option.value as any);
+                                setShowThemeOptions(false);
+                              }}
+                              className={`px-3 sm:px-4 py-1.5 text-ios-caption-1 rounded-full transition-colors ${
+                                isActive
+                                  ? 'bg-black dark:bg-white text-white dark:text-black'
+                                  : 'text-black/60 dark:text-white/60'
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
             {/* Categories Section */}

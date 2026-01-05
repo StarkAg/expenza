@@ -34,9 +34,6 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
     <div className="mb-4 sm:mb-6">
       <div className="flex justify-between items-center mb-2 sm:mb-3">
         <h2 className="text-ios-title-3 text-black dark:text-white">Accounts</h2>
-        <span className="text-ios-body font-semibold text-black dark:text-white">
-          {formatCurrency(totalBalance)}
-        </span>
       </div>
       <div className="space-y-2">
         {accounts.map((account) => (
@@ -62,6 +59,16 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
             </span>
           </div>
         ))}
+      </div>
+      <div className="mt-3 flex justify-center">
+        <div className="inline-flex flex-col items-center px-4 py-2 rounded-ios-lg bg-white dark:bg-black border border-black/10 dark:border-white/10">
+          <span className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-0.5">
+            Total Balance
+          </span>
+          <span className="text-ios-body font-semibold text-black dark:text-white">
+            {formatCurrency(totalBalance)}
+          </span>
+        </div>
       </div>
     </div>
   );

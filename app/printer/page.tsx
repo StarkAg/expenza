@@ -304,11 +304,7 @@ export default function PrinterPage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-20 sm:pb-24">
-          <h1 className="text-ios-large-title text-black dark:text-white mb-4 sm:mb-6">
-            Printer Management
-          </h1>
-
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-6 pb-20 sm:pb-24">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">

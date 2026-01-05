@@ -54,7 +54,8 @@ export default function RootLayout({
         <Providers>
           <DesktopHeader />
           <OfflineIndicator />
-          {children}
+          {/* Add top padding on larger screens so content isn't hidden behind the fixed header */}
+          <div className="pt-3 sm:pt-4 md:pt-16">{children}</div>
         </Providers>
       </body>
     </html>
