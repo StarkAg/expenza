@@ -538,14 +538,62 @@ export default function SettingsPage() {
             </div>
 
             <div className="pt-4">
-              <p className="text-ios-caption-1 text-black/50 dark:text-white/50 text-center">
-                Expenza v1.0.0
-              </p>
+              <SecretPrinterOption />
             </div>
           </div>
         </div>
       </main>
       <BottomNav />
+    </div>
+  );
+}
+
+function SecretPrinterOption() {
+  const router = useRouter();
+  const [tapCount, setTapCount] = useState(0);
+  const [tapTimeout, setTapTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const handleTap = () => {
+    hapticFeedback('light');
+    const newCount = tapCount + 1;
+    setTapCount(newCount);
+
+    // Reset counter after 2 seconds
+    if (tapTimeout) {
+      clearTimeout(tapTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      setTapCount(0);
+    }, 2000);
+
+    setTapTimeout(timeout);
+
+    // If tapped 5 times, navigate to printer page
+    if (newCount >= 5) {
+      clearTimeout(timeout);
+      setTapCount(0);
+      router.push('/printer');
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (tapTimeout) {
+        clearTimeout(tapTimeout);
+      }
+    };
+  }, [tapTimeout]);
+
+  return (
+    <div
+      onClick={handleTap}
+      className="cursor-pointer active:opacity-70 transition-opacity"
+      aria-hidden="true"
+    >
+      <p className="text-ios-caption-1 text-black/50 dark:text-white/50 text-center">
+        Expenza v1.0.0
+      </p>
     </div>
   );
 }
