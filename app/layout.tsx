@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import OfflineIndicator from './components/OfflineIndicator';
+import CSSReloader from './components/CSSReloader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -47,7 +48,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Preload critical CSS */}
+        <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <CSSReloader />
         <Providers>
           <OfflineIndicator />
           {children}
