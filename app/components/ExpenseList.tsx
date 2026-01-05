@@ -21,9 +21,10 @@ interface ExpenseListProps {
   loading: boolean;
   onDelete: (id: string) => void;
   onEdit?: (expense: Expense) => void;
+  onAddToPrinter?: (expense: Expense) => void;
 }
 
-export default function ExpenseList({ expenses, loading, onDelete, onEdit }: ExpenseListProps) {
+export default function ExpenseList({ expenses, loading, onDelete, onEdit, onAddToPrinter }: ExpenseListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading) {
