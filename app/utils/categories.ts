@@ -17,10 +17,10 @@ const DEFAULT_CATEGORY_COLORS: Record<string, string> = {
   'Food': '#E23744',
   'Transport': '#000000',
   'Shopping': '#9B870C',
-  'Bills': '#845EF7',
-  'Entertainment': '#51CF66',
-  'Health': '#FD7E14',
-  'Other': '#FF6B6B', // Default fallback color
+  'Bills': '#5F3DC4',
+  'Entertainment': '#2F9E44',
+  'Health': '#E8590C',
+  'Other': '#868E96',
 };
 
 // Preset aesthetic colors
