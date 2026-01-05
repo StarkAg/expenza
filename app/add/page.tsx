@@ -658,8 +658,8 @@ export default function AddExpensePage() {
           {!showManage && (
             <>
             {padMode ? (
-            <div className="flex flex-col h-[calc(100vh-10rem)] sm:h-[calc(100vh-12rem)]">
-              <form onSubmit={handlePadSubmit} className="flex flex-col flex-1">
+            <form onSubmit={handlePadSubmit} className="space-y-4 sm:space-y-6">
+              <div>
                 <label className="block text-ios-body font-semibold text-black dark:text-white mb-4">
                   Quick Entry
                 </label>
@@ -697,7 +697,7 @@ export default function AddExpensePage() {
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="flex-1 min-h-[400px] px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full min-h-[400px] px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
                 <button
@@ -707,8 +707,8 @@ export default function AddExpensePage() {
                 >
                   {loading ? 'Adding...' : 'Add Expense'}
                 </button>
-              </form>
-            </div>
+              </div>
+            </form>
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
