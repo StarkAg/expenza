@@ -42,16 +42,26 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
+  // Skip service worker for cross-origin requests (like Supabase, fonts, etc.)
+  if (url.origin !== location.origin) {
+    return; // Let browser handle cross-origin requests normally
+  }
+  
   // For CSS and JS files, always try network first
   if (url.pathname.match(/\.(css|js)$/) || url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, {
+        cache: 'no-cache',
+        credentials: 'same-origin',
+      })
         .then((response) => {
-          // Clone the response before caching
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          // Only cache successful responses
+          if (response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
           return response;
         })
         .catch(() => {
@@ -60,11 +70,26 @@ self.addEventListener('fetch', (event) => {
         })
     );
   } else {
-    // For HTML pages, try cache first, then network
+    // For HTML pages, try network first, then cache
     event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request);
+      fetch(event.request, {
+        cache: 'no-cache',
+        credentials: 'same-origin',
       })
+        .then((response) => {
+          // Only cache successful responses
+          if (response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // If network fails, try cache
+          return caches.match(event.request);
+        })
     );
   }
 });

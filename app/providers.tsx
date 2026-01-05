@@ -39,9 +39,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Register service worker
+    // Register service worker with better error handling
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
+      navigator.serviceWorker
+        .register('/sw.js', {
+          scope: '/',
+        })
+        .then((registration) => {
+          console.log('Service Worker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+        });
     }
 
     // Function to update username from localStorage
