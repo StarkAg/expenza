@@ -440,9 +440,21 @@ export default function AddExpensePage() {
     }
   };
 
+  // Prevent body scroll when on this page
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
-      <main className="flex-1 overflow-hidden pb-safe-bottom flex flex-col">
+      <main className="flex-1 overflow-hidden pb-safe-bottom flex flex-col min-h-0">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
           <div className="flex justify-between items-center mb-2 sm:mb-3 flex-shrink-0">
             {!editingExpense && (
@@ -736,7 +748,7 @@ export default function AddExpensePage() {
               </form>
             </div>
           ) : (
-          <form onSubmit={handleSubmit} className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-2 max-h-full overflow-hidden">
             <div>
               <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                 Amount
