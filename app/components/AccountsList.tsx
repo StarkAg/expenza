@@ -54,18 +54,15 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
                   : 'text-black dark:text-white'
               }`}
             >
-              {account.type === 'credit_card' ? '-' : ''}
-              {formatCurrency(account.balance)}
+              {formatCurrency(account.type === 'credit_card' ? -account.balance : account.balance)}
             </span>
           </div>
         ))}
       </div>
-      <div className="mt-3 flex justify-center">
-        <div className="inline-flex flex-col items-center px-4 py-2 rounded-ios-lg bg-white dark:bg-black border border-black/10 dark:border-white/10">
-          <span className="text-ios-caption-1 text-black/60 dark:text-white/60 mb-0.5">
-            Total Balance
-          </span>
-          <span className="text-ios-body font-semibold text-black dark:text-white">
+      <div className="mt-3">
+        <div className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios">
+          <span className="text-ios-body font-bold text-black dark:text-white">Total Balance</span>
+          <span className="text-ios-body font-bold text-black dark:text-white">
             {formatCurrency(totalBalance)}
           </span>
         </div>
