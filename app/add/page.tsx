@@ -7,7 +7,7 @@ import BottomNav from '../components/BottomNav';
 import { hapticFeedback } from '../utils/haptics';
 import { format, addDays, subDays } from 'date-fns';
 import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, CalculatorIcon } from '../components/Icons';
-import { getCategories } from '../utils/categories';
+import { getCategoryNames } from '../utils/categories';
 import { formatCurrency } from '../utils/currency';
 
 export default function AddExpensePage() {
@@ -22,7 +22,7 @@ export default function AddExpensePage() {
   const [loading, setLoading] = useState(false);
   const [padMode, setPadMode] = useState(true); // Default to true for quick entry
   const [padInput, setPadInput] = useState('');
-  const [categories, setCategories] = useState<string[]>(getCategories());
+  const [categories, setCategories] = useState<string[]>(getCategoryNames());
   const [showManage, setShowManage] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
@@ -48,7 +48,7 @@ export default function AddExpensePage() {
   }, [username, showManage, supabase]);
 
   const loadCategories = () => {
-    setCategories(getCategories());
+    setCategories(getCategoryNames());
   };
 
   const loadAccounts = async () => {

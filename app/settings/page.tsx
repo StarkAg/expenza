@@ -9,19 +9,23 @@ import { EditIcon, DeleteIcon, GripVerticalIcon, AddIcon } from '../components/I
 import { formatCurrency } from '../utils/currency';
 import {
   getCategories,
-  setCategories,
-  updateCategory,
+  type Category,
+  updateCategoryName,
+  updateCategoryColor,
   removeCategory,
   reorderCategories,
   resetCategories,
+  PRESET_COLORS,
 } from '../utils/categories';
+import ColorPicker from '../components/ColorPicker';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { supabase, username } = useSupabase();
-  const [categories, setCategoriesState] = useState<string[]>([]);
+  const [categories, setCategoriesState] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [editingColorId, setEditingColorId] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -95,18 +99,25 @@ export default function SettingsPage() {
   const handleStartEdit = (index: number) => {
     hapticFeedback('light');
     setEditingId(index);
-    setEditValue(categories[index]);
+    setEditValue(categories[index].name);
+    setEditingColorId(null); // Close color picker if open
   };
 
   const handleSaveEdit = (index: number) => {
     hapticFeedback('light');
     const newName = editValue.trim();
-    if (newName && newName !== categories[index]) {
-      updateCategory(categories[index], newName);
+    if (newName && newName !== categories[index].name) {
+      updateCategoryName(categories[index].name, newName);
       loadCategories();
     }
     setEditingId(null);
     setEditValue('');
+  };
+
+  const handleColorChange = (index: number, color: string) => {
+    hapticFeedback('light');
+    updateCategoryColor(categories[index].name, color);
+    loadCategories();
   };
 
   const handleCancelEdit = () => {
@@ -116,8 +127,8 @@ export default function SettingsPage() {
 
   const handleDelete = (index: number) => {
     hapticFeedback('medium');
-    if (confirm(`Delete category "${categories[index]}"?`)) {
-      removeCategory(categories[index]);
+    if (confirm(`Delete category "${categories[index].name}"?`)) {
+      removeCategory(categories[index].name);
       loadCategories();
     }
   };

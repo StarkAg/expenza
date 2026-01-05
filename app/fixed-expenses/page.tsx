@@ -7,7 +7,7 @@ import BottomNav from '../components/BottomNav';
 import FixedExpensesList from '../components/FixedExpensesList';
 import { hapticFeedback } from '../utils/haptics';
 import { formatCurrency } from '../utils/currency';
-import { getCategories } from '../utils/categories';
+import { getCategoryNames } from '../utils/categories';
 
 export default function FixedExpensesPage() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function FixedExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
-  const [categories, setCategories] = useState<string[]>(getCategories());
+  const [categories, setCategories] = useState<string[]>(getCategoryNames());
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(categories[0] || '');
@@ -44,7 +44,7 @@ export default function FixedExpensesPage() {
   }, [username, authLoading, router]);
 
   const loadCategories = () => {
-    const cats = getCategories();
+    const cats = getCategoryNames();
     setCategories(cats);
     if (cats.length > 0 && !cats.includes(category)) {
       setCategory(cats[0]);
