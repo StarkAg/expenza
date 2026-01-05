@@ -1,44 +1,43 @@
 // Service Worker for Expenza Expense Tracker
-const CACHE_NAME = 'expenza-v2';
-const urlsToCache = [
-  '/',
-  '/auth',
-  '/add',
-  '/stats',
-  '/settings',
-  '/transactions',
-];
+const CACHE_NAME = 'expenza-v4';
+const STATIC_CACHE_NAME = 'expenza-static-v4';
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    Promise.all([
+      // Cache static assets immediately
+      caches.open(STATIC_CACHE_NAME).then((cache) => {
+        // Don't cache HTML pages during install - let them be fetched fresh
+        return Promise.resolve();
+      }),
+      // Skip waiting immediately for faster activation
+      self.skipWaiting(),
+    ])
   );
-  // Force the waiting service worker to become the active service worker
-  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all pages immediately
+      self.clients.claim(),
+    ])
   );
-  // Take control of all pages immediately
-  return self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
-// Always fetch CSS and JS from network first, then cache
+// Fetch event - optimized for native-like performance
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
@@ -47,49 +46,42 @@ self.addEventListener('fetch', (event) => {
     return; // Let browser handle cross-origin requests normally
   }
   
-  // For CSS and JS files, always try network first
-  if (url.pathname.match(/\.(css|js)$/) || url.pathname.startsWith('/_next/static/')) {
+  // For static assets (CSS, JS, images), use stale-while-revalidate strategy
+  if (
+    url.pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/) ||
+    url.pathname.startsWith('/_next/static/')
+  ) {
     event.respondWith(
-      fetch(event.request, {
-        cache: 'no-cache',
-        credentials: 'same-origin',
+      caches.open(STATIC_CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          // Return cached version immediately for instant loading
+          const fetchPromise = fetch(event.request, {
+            cache: 'no-cache',
+            credentials: 'same-origin',
+          }).then((networkResponse) => {
+            // Update cache in background
+            if (networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          });
+          
+          // Return cached version immediately, update in background
+          return cachedResponse || fetchPromise;
+        });
       })
-        .then((response) => {
-          // Only cache successful responses
-          if (response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // If network fails, try cache
-          return caches.match(event.request);
-        })
     );
   } else {
-    // For HTML pages, try network first, then cache
+    // For HTML pages, always fetch fresh from network (no caching)
+    // This ensures users always get the latest version without refresh
     event.respondWith(
       fetch(event.request, {
-        cache: 'no-cache',
+        cache: 'no-store',
         credentials: 'same-origin',
+      }).catch(() => {
+        // Only use cache if network completely fails
+        return caches.match(event.request);
       })
-        .then((response) => {
-          // Only cache successful responses
-          if (response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // If network fails, try cache
-          return caches.match(event.request);
-        })
     );
   }
 });

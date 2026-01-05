@@ -5,6 +5,9 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js'],
   },
+  // Optimize for performance
+  compress: true,
+  poweredByHeader: false,
   // PWA configuration
   async headers() {
     return [
@@ -14,6 +17,10 @@ const nextConfig = {
           {
             key: 'Content-Type',
             value: 'application/manifest+json',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
@@ -52,6 +59,15 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
