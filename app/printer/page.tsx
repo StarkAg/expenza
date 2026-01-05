@@ -80,31 +80,15 @@ export default function PrinterPage() {
     const trimmed = input.trim();
     if (!trimmed) return null;
 
-    // Try to extract: pages type cost or cost pages type
-    // Examples: "10 bw 500" or "500 10 bw" or "10 color 500"
+    // Try to extract: pages type [cost] or cost pages type
+    // Examples: "6 bw", "10 bw 500", "500 10 color", "6 black"
     const parts = trimmed.split(/\s+/);
     
     let pages = '';
     let type: 'black_white' | 'color' = 'black_white';
-    let cost = '';
+    let cost = '0'; // Default cost to 0
 
-    // Try to find numbers
-    const numbers = parts.filter((p) => /^\d+\.?\d*$/.test(p));
-    
-    if (numbers.length >= 2) {
-      // Assume first number is pages, second is cost
-      pages = numbers[0];
-      cost = numbers[1];
-    } else if (numbers.length === 1) {
-      // Could be pages or cost, check context
-      if (parts.indexOf(numbers[0]) < parts.length / 2) {
-        pages = numbers[0];
-      } else {
-        cost = numbers[0];
-      }
-    }
-
-    // Find type keywords
+    // Find type keywords first
     const inputLower = trimmed.toLowerCase();
     if (inputLower.includes('color') || inputLower.includes('col') || inputLower.includes('c ')) {
       type = 'color';
@@ -112,21 +96,62 @@ export default function PrinterPage() {
       type = 'black_white';
     }
 
+    // Try to find numbers
+    const numbers = parts.filter((p) => /^\d+\.?\d*$/.test(p));
+    
+    if (numbers.length >= 2) {
+      // If we have 2 numbers, first is likely pages, second is cost
+      // But check position relative to type keyword
+      const typeIndex = parts.findIndex(p => 
+        p.toLowerCase().includes('bw') || 
+        p.toLowerCase().includes('black') || 
+        p.toLowerCase().includes('color') ||
+        p.toLowerCase().includes('col')
+      );
+      
+      if (typeIndex >= 0) {
+        // Type keyword found, numbers before it are pages, after are cost
+        const pagesIndex = parts.indexOf(numbers[0]);
+        const costIndex = parts.indexOf(numbers[1]);
+        
+        if (pagesIndex < typeIndex && costIndex > typeIndex) {
+          // Format: "6 bw 500"
+          pages = numbers[0];
+          cost = numbers[1];
+        } else if (pagesIndex > typeIndex && costIndex < typeIndex) {
+          // Format: "500 bw 6" (unlikely but handle it)
+          pages = numbers[1];
+          cost = numbers[0];
+        } else {
+          // Default: first number is pages, second is cost
+          pages = numbers[0];
+          cost = numbers[1];
+        }
+      } else {
+        // No type keyword found, assume first is pages, second is cost
+        pages = numbers[0];
+        cost = numbers[1];
+      }
+    } else if (numbers.length === 1) {
+      // Only one number - assume it's pages (cost defaults to 0)
+      pages = numbers[0];
+    }
+
     return { pages, type, cost };
   };
 
   const handlePadSubmit = () => {
     const parsed = parsePadInput(padInput);
-    if (!parsed || !parsed.pages || !parsed.cost) {
-      alert('Please enter pages and cost. Example: "10 bw 500" or "500 10 color"');
+    if (!parsed || !parsed.pages) {
+      alert('Please enter pages and type. Example: "6 bw" or "10 color"');
       return;
     }
 
     const pages = parseFloat(parsed.pages);
-    const cost = parseFloat(parsed.cost);
+    const cost = parseFloat(parsed.cost || '0');
 
-    if (isNaN(pages) || isNaN(cost) || pages <= 0 || cost <= 0) {
-      alert('Please enter valid numbers for pages and cost');
+    if (isNaN(pages) || pages <= 0) {
+      alert('Please enter a valid number for pages');
       return;
     }
 
@@ -134,7 +159,7 @@ export default function PrinterPage() {
       date: expenseDate,
       pages,
       type: parsed.type,
-      cost,
+      cost, // Cost can be 0, will be calculated from cartridge cost
     });
 
     setPadInput('');
@@ -261,7 +286,7 @@ export default function PrinterPage() {
                 <textarea
                   value={padInput}
                   onChange={(e) => setPadInput(e.target.value)}
-                  placeholder="Example: 10 bw 500 or 500 10 color"
+                  placeholder="Example: 6 bw or 10 color (cost calculated from cartridge)"
                   className="w-full min-h-[100px] px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   inputMode="text"
                   autoCapitalize="sentences"

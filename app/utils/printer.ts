@@ -71,41 +71,25 @@ export function removeCartridgeReplacement(id: string): void {
 }
 
 export function calculateCostPerPage(type: 'black_white' | 'color'): number {
+  // Get all cartridge replacements of this type
   const replacements = getCartridgeReplacements()
-    .filter((r) => r.type === type)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .filter((r) => r.type === type);
   
   if (replacements.length === 0) return 0;
 
-  const expenses = getPrinterExpenses()
-    .filter((e) => e.type === type)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  // Get total cost of all cartridges
+  const totalCartridgeCost = replacements.reduce((sum, r) => sum + r.cost, 0);
 
+  // Get total pages printed of this type
+  const expenses = getPrinterExpenses()
+    .filter((e) => e.type === type);
+  
   if (expenses.length === 0) return 0;
 
-  // Find the most recent cartridge replacement before the first expense
-  let totalCost = 0;
-  let totalPages = 0;
-  let currentCartridgeIndex = 0;
+  const totalPages = expenses.reduce((sum, e) => sum + e.pages, 0);
 
-  for (const expense of expenses) {
-    // Find the cartridge replacement that applies to this expense
-    while (
-      currentCartridgeIndex < replacements.length &&
-      new Date(replacements[currentCartridgeIndex].date) <= new Date(expense.date)
-    ) {
-      currentCartridgeIndex++;
-    }
-    
-    // Use the most recent cartridge before this expense
-    if (currentCartridgeIndex > 0) {
-      const applicableCartridge = replacements[currentCartridgeIndex - 1];
-      totalCost += applicableCartridge.cost;
-      totalPages += expense.pages;
-    }
-  }
-
-  return totalPages > 0 ? totalCost / totalPages : 0;
+  // Cost per page = total cartridge cost / total pages printed
+  return totalPages > 0 ? totalCartridgeCost / totalPages : 0;
 }
 
 export function getTotalPages(type?: 'black_white' | 'color'): number {
