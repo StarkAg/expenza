@@ -214,7 +214,7 @@ export default function FixedExpensesPage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-24 sm:pb-28">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-32 sm:pb-36">
 
           {!showForm && (
             <>
