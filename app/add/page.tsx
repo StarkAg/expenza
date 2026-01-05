@@ -199,28 +199,37 @@ export default function AddExpensePage() {
     const trimmed = input.trim();
     if (!trimmed) return null;
 
-    // Extract number (can be at start or anywhere)
-    const numberMatch = trimmed.match(/(\d+(?:\.\d+)?)/);
-    let extractedAmount = '';
-    let remainingText = trimmed;
-
-    if (numberMatch) {
-      extractedAmount = numberMatch[1];
-      // Remove the number from the text
-      remainingText = trimmed.replace(numberMatch[0], '').trim();
-    }
+    // Extract all numbers from the input
+    const numberMatches = trimmed.match(/(\d+(?:\.\d+)?)/g);
+    if (!numberMatches || numberMatches.length === 0) return null;
 
     // Find matching category (case-insensitive)
     let extractedCategory = '';
-    let extractedNote = remainingText;
+    let remainingText = trimmed;
 
+    // Remove all numbers from text to find category
+    for (const num of numberMatches) {
+      remainingText = remainingText.replace(num, '').trim();
+    }
+
+    // Find matching category (case-insensitive)
     for (const cat of categories) {
       const regex = new RegExp(`\\b${cat}\\b`, 'i');
       if (regex.test(remainingText)) {
         extractedCategory = cat;
-        // Remove category from note
-        extractedNote = remainingText.replace(regex, '').trim();
+        remainingText = remainingText.replace(regex, '').trim();
         break;
+      }
+    }
+
+    // Check if "Auto" is mentioned and map to Transport
+    if (!extractedCategory && /auto/i.test(remainingText)) {
+      if (categories.includes('Transport')) {
+        extractedCategory = 'Transport';
+        remainingText = remainingText.replace(/auto/gi, '').trim();
+      } else if (categories.find(cat => cat.toLowerCase() === 'auto')) {
+        extractedCategory = categories.find(cat => cat.toLowerCase() === 'auto') || '';
+        remainingText = remainingText.replace(/auto/gi, '').trim();
       }
     }
 
@@ -234,26 +243,36 @@ export default function AddExpensePage() {
       );
       if (matchedCategory) {
         extractedCategory = matchedCategory;
-        extractedNote = words.slice(1).join(' ').trim();
-      } else {
-        // If first word doesn't match, use it as note
-        extractedNote = remainingText;
+        remainingText = words.slice(1).join(' ').trim();
       }
     }
 
-    return {
-      amount: extractedAmount,
+    // Create an expense entry for each number found
+    const expenses = numberMatches.map((amountStr) => ({
+      amount: amountStr,
       category: extractedCategory,
-      note: extractedNote,
-    };
+      note: remainingText.trim() || null,
+    }));
+
+    return expenses;
   };
 
   const handlePadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !padInput.trim()) return;
 
-    const parsed = parsePadInput(padInput);
-    if (!parsed || !parsed.amount || parseFloat(parsed.amount) <= 0) {
+    const parsedExpenses = parsePadInput(padInput);
+    if (!parsedExpenses || parsedExpenses.length === 0) {
+      hapticFeedback('medium');
+      return;
+    }
+
+    // Validate all amounts
+    const validExpenses = parsedExpenses.filter(
+      (exp) => exp.amount && parseFloat(exp.amount) > 0
+    );
+
+    if (validExpenses.length === 0) {
       hapticFeedback('medium');
       return;
     }
@@ -261,22 +280,23 @@ export default function AddExpensePage() {
     hapticFeedback('medium');
     setLoading(true);
 
-    const expenseData = {
+    const expenseDate = new Date().toISOString().split('T')[0];
+    const expensesToInsert = validExpenses.map((exp) => ({
       username: username,
-      amount: parseFloat(parsed.amount).toFixed(2),
-      category: parsed.category.trim() || '',
-      note: parsed.note.trim() || null,
-      date: new Date().toISOString().split('T')[0],
-    };
+      amount: parseFloat(exp.amount).toFixed(2),
+      category: exp.category.trim() || '',
+      note: exp.note || null,
+      date: expenseDate,
+    }));
 
     try {
       if (typeof window !== 'undefined' && navigator.onLine) {
-        const { error } = await supabase.from('expenses').insert(expenseData);
+        const { error } = await supabase.from('expenses').insert(expensesToInsert);
         if (error) throw error;
       } else if (typeof window !== 'undefined') {
         // Store offline for later sync
         const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
-        pending.push(expenseData);
+        pending.push(...expensesToInsert);
         localStorage.setItem('pendingExpenses', JSON.stringify(pending));
       }
 
@@ -285,7 +305,7 @@ export default function AddExpensePage() {
       hapticFeedback('light');
       router.push('/transactions');
     } catch (error) {
-      console.error('Error adding expense:', error);
+      console.error('Error adding expenses:', error);
       hapticFeedback('medium');
     } finally {
       setLoading(false);
