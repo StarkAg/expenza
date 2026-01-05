@@ -24,18 +24,23 @@ body {
   overflow-x: hidden;
   /* Disable Safari bounce and zoom */
   overscroll-behavior: none;
+  overscroll-behavior-y: none;
   touch-action: pan-y;
   /* Prevent text selection on iOS */
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  /* Smooth scrolling */
+  /* Smooth scrolling - momentum on iOS */
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   /* Responsive base font size */
   font-size: 16px;
   /* Hide scrollbars (Firefox / legacy Edge) */
   -ms-overflow-style: none; /* IE and old Edge */
   scrollbar-width: none; /* Firefox */
+  /* Ensure proper height for scrolling */
+  height: 100%;
+  position: relative;
 }
 
 @media (max-width: 374px) {
@@ -65,6 +70,9 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  /* Ensure full height for proper scrolling */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 /* Premium B&W theme overrides */
@@ -206,9 +214,29 @@ img, video, iframe {
   height: auto;
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling - optimized for all browsers */
 html {
   scroll-behavior: smooth;
+}
+
+/* Optimize scroll containers for smooth, full-range scrolling */
+main,
+[class*="overflow-y-auto"],
+[class*="overflow-y-scroll"] {
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent scroll chaining and bounce */
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  /* Enable hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Optimize for scrolling performance */
+  will-change: scroll-position;
+  /* Ensure smooth scrolling */
+  scroll-behavior: smooth;
+  /* Prevent layout shifts during scroll */
+  contain: layout style paint;
 }
 
 /* Optimize animations */
