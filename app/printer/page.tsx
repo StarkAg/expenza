@@ -14,9 +14,6 @@ import {
   getCartridgeReplacements,
   addCartridgeReplacement,
   removeCartridgeReplacement,
-  calculateCostPerPage,
-  getTotalPages,
-  getTotalCost,
   type PrinterExpense,
   type CartridgeReplacement,
 } from '../utils/printer';
@@ -287,31 +284,22 @@ export default function PrinterPage() {
     }
   };
 
-  // Calculate stats (using state values)
-  const bwCostPerPage = expenses.length > 0 && cartridges.length > 0
-    ? (async () => {
-        const bwCartridges = cartridges.filter((c) => c.type === 'black_white');
-        const bwExpenses = expenses.filter((e) => e.type === 'black_white');
-        const totalCartridgeCost = bwCartridges.reduce((sum, c) => sum + c.cost, 0);
-        const totalPages = bwExpenses.reduce((sum, e) => sum + e.pages, 0);
-        return totalPages > 0 ? totalCartridgeCost / totalPages : 0;
-      })()
-    : Promise.resolve(0);
-
-  const colorCostPerPage = expenses.length > 0 && cartridges.length > 0
-    ? (async () => {
-        const colorCartridges = cartridges.filter((c) => c.type === 'color');
-        const colorExpenses = expenses.filter((e) => e.type === 'color');
-        const totalCartridgeCost = colorCartridges.reduce((sum, c) => sum + c.cost, 0);
-        const totalPages = colorExpenses.reduce((sum, e) => sum + e.pages, 0);
-        return totalPages > 0 ? totalCartridgeCost / totalPages : 0;
-      })()
-    : Promise.resolve(0);
-
-  const totalBwPages = expenses.filter((e) => e.type === 'black_white').reduce((sum, e) => sum + e.pages, 0);
-  const totalColorPages = expenses.filter((e) => e.type === 'color').reduce((sum, e) => sum + e.pages, 0);
-  const totalBwCost = expenses.filter((e) => e.type === 'black_white').reduce((sum, e) => sum + e.cost, 0);
-  const totalColorCost = expenses.filter((e) => e.type === 'color').reduce((sum, e) => sum + e.cost, 0);
+  // Calculate stats synchronously from state values
+  const bwCartridges = cartridges.filter((c) => c.type === 'black_white');
+  const colorCartridges = cartridges.filter((c) => c.type === 'color');
+  const bwExpenses = expenses.filter((e) => e.type === 'black_white');
+  const colorExpenses = expenses.filter((e) => e.type === 'color');
+  
+  const totalBwCartridgeCost = bwCartridges.reduce((sum, c) => sum + c.cost, 0);
+  const totalColorCartridgeCost = colorCartridges.reduce((sum, c) => sum + c.cost, 0);
+  const totalBwPages = bwExpenses.reduce((sum, e) => sum + e.pages, 0);
+  const totalColorPages = colorExpenses.reduce((sum, e) => sum + e.pages, 0);
+  
+  const bwCostPerPage = totalBwPages > 0 ? totalBwCartridgeCost / totalBwPages : 0;
+  const colorCostPerPage = totalColorPages > 0 ? totalColorCartridgeCost / totalColorPages : 0;
+  
+  const totalBwCost = bwExpenses.reduce((sum, e) => sum + e.cost, 0);
+  const totalColorCost = colorExpenses.reduce((sum, e) => sum + e.cost, 0);
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
