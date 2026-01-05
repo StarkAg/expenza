@@ -311,7 +311,13 @@ export default function StatsPage() {
                       key={category}
                       className="flex justify-between items-center p-3 sm:p-4 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios"
                     >
-                      <span className="text-ios-body text-black dark:text-white">{category}</span>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full border border-black/20 dark:border-white/20 flex-shrink-0"
+                          style={{ backgroundColor: getCategoryColor(category) }}
+                        />
+                        <span className="text-ios-body text-black dark:text-white">{category}</span>
+                      </div>
                       <span className="text-ios-body font-semibold text-black dark:text-white">
                         {formatCurrency(amount)}
                       </span>

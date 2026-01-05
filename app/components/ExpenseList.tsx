@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { hapticFeedback } from '../utils/haptics';
 import { formatCurrency } from '../utils/currency';
+import { getCategoryColor } from '../utils/categories';
 import { EditIcon, DeleteIcon } from './Icons';
 
 interface Expense {
@@ -81,16 +82,21 @@ export default function ExpenseList({ expenses, loading, onDelete, onEdit }: Exp
             onClick={() => handleClick(expense.id)}
             className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios p-4 cursor-pointer active:opacity-80 transition-opacity"
           >
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-ios-headline font-semibold text-black dark:text-white">
-                    {formatCurrency(expense.amount)}
-                  </span>
-                  <span className="px-2 py-0.5 bg-black/10 dark:bg-white/20 text-black dark:text-white text-ios-caption-1 rounded-full border border-black/20 dark:border-white/20">
-                    {expense.category}
-                  </span>
-                </div>
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-ios-headline font-semibold text-black dark:text-white">
+                        {formatCurrency(expense.amount)}
+                      </span>
+                      {expense.category && (
+                        <span
+                          className="px-2 py-0.5 text-white text-ios-caption-1 rounded-full border border-black/10 dark:border-white/10"
+                          style={{ backgroundColor: getCategoryColor(expense.category) }}
+                        >
+                          {expense.category}
+                        </span>
+                      )}
+                    </div>
                 {expense.note && (
                   <p className="text-ios-subhead text-black/60 dark:text-white/60">
                     {expense.note}
