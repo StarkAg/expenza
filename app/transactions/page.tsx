@@ -24,8 +24,9 @@ export default function TransactionsPage() {
       return;
     }
 
-    // Load expenses once username is available
+    // Load expenses and accounts once username is available
     loadExpenses();
+    loadAccounts();
 
     // Subscribe to real-time changes
     const channel = supabase
@@ -109,14 +110,71 @@ export default function TransactionsPage() {
     }
   };
 
+  const loadAccounts = async () => {
+    if (!username) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('username', username)
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error loading accounts:', error);
+        setAccounts([]);
+      } else {
+        setAccounts(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+      setAccounts([]);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!username) return;
+
+    // Find the expense to get account_id and amount
+    const expenseToDelete = expenses.find((e) => e.id === id);
+    if (!expenseToDelete) return;
 
     // Optimistic update
     const previousExpenses = expenses;
     setExpenses(expenses.filter((e) => e.id !== id));
 
     try {
+      // Reverse payment if expense had an account
+      if (expenseToDelete.account_id) {
+        // Fetch current account balance from database
+        const { data: accountData, error: fetchError } = await supabase
+          .from('accounts')
+          .select('balance, type')
+          .eq('id', expenseToDelete.account_id)
+          .eq('username', username)
+          .single();
+        
+        if (!fetchError && accountData && accountData.type === 'bank') {
+          const expenseAmount = parseFloat(expenseToDelete.amount);
+          const currentBalance = parseFloat(accountData.balance);
+          const reversedBalance = currentBalance + expenseAmount; // Credit back
+          
+          const { error: accountError } = await supabase
+            .from('accounts')
+            .update({ balance: reversedBalance })
+            .eq('id', expenseToDelete.account_id)
+            .eq('username', username);
+          if (accountError) {
+            console.error('Error reversing payment:', accountError);
+          } else {
+            // Reload accounts to update the balance in UI
+            await loadAccounts();
+          }
+        }
+      }
+      
+      // Delete the expense
       const { error } = await supabase.from('expenses').delete().eq('id', id).eq('username', username);
       if (error) throw error;
     } catch (error) {

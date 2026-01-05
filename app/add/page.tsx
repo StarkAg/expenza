@@ -375,10 +375,17 @@ export default function AddExpensePage() {
       if (editingExpense) {
         // Reverse old payment if expense had an account
         if (editingExpense.account_id && typeof window !== 'undefined' && navigator.onLine) {
-          const oldAccount = accounts.find((acc) => acc.id === editingExpense.account_id);
-          if (oldAccount && oldAccount.type === 'bank') {
+          // Fetch current account balance from database
+          const { data: oldAccountData, error: fetchError } = await supabase
+            .from('accounts')
+            .select('balance, type')
+            .eq('id', editingExpense.account_id)
+            .eq('username', username)
+            .single();
+          
+          if (!fetchError && oldAccountData && oldAccountData.type === 'bank') {
             const oldAmount = parseFloat(editingExpense.amount);
-            const oldBalance = parseFloat(oldAccount.balance);
+            const oldBalance = parseFloat(oldAccountData.balance);
             const reversedBalance = oldBalance + oldAmount; // Credit back
             
             const { error: reverseError } = await supabase
@@ -407,10 +414,18 @@ export default function AddExpensePage() {
           
           // Debit from new account if different account is selected
           if (selectedAccountId && selectedAccountId !== editingExpense.account_id) {
-            const newAccount = accounts.find((acc) => acc.id === selectedAccountId);
-            if (newAccount && newAccount.type === 'bank') {
+            // Fetch current account balance from database
+            const { data: newAccountData, error: fetchError } = await supabase
+              .from('accounts')
+              .select('balance, type')
+              .eq('id', selectedAccountId)
+              .eq('username', username)
+              .single();
+            
+            if (!fetchError && newAccountData && newAccountData.type === 'bank') {
               const newAmount = parseFloat(amount);
-              const newBalance = parseFloat(newAccount.balance) - newAmount;
+              const currentBalance = parseFloat(newAccountData.balance);
+              const newBalance = currentBalance - newAmount;
               const { error: accountError } = await supabase
                 .from('accounts')
                 .update({ balance: newBalance })
@@ -423,10 +438,17 @@ export default function AddExpensePage() {
           } else if (selectedAccountId && selectedAccountId === editingExpense.account_id) {
             // Same account, debit the new amount (we already credited back the old amount)
             const newAmount = parseFloat(amount);
-            const account = accounts.find((acc) => acc.id === selectedAccountId);
-            if (account && account.type === 'bank') {
+            // Fetch current account balance from database (after we credited back old amount)
+            const { data: accountData, error: fetchError } = await supabase
+              .from('accounts')
+              .select('balance, type')
+              .eq('id', selectedAccountId)
+              .eq('username', username)
+              .single();
+            
+            if (!fetchError && accountData && accountData.type === 'bank') {
               // Current balance already has old amount credited, now debit new amount
-              const currentBalance = parseFloat(account.balance);
+              const currentBalance = parseFloat(accountData.balance);
               const adjustedBalance = currentBalance - newAmount;
               const { error: accountError } = await supabase
                 .from('accounts')
@@ -548,39 +570,37 @@ export default function AddExpensePage() {
                 </button>
               </div>
             )}
-            {!editingExpense && (
-              <div className="flex gap-2">
-                {padMode ? (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePadSubmit(e as any);
-                    }}
-                    disabled={loading || !padInput.trim()}
-                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? 'Adding...' : 'Add'}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSubmit(e as any);
-                    }}
-                    disabled={loading || !amount || parseFloat(amount) <= 0}
-                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading
-                      ? 'Adding...'
-                      : editingExpense
-                        ? 'Update'
-                        : 'Add'}
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="flex gap-2">
+              {padMode && !editingExpense ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePadSubmit(e as any);
+                  }}
+                  disabled={loading || !padInput.trim()}
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Adding...' : 'Add'}
+                </button>
+              ) : !padMode ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSubmit(e as any);
+                  }}
+                  disabled={loading || !amount || parseFloat(amount) <= 0}
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading
+                    ? editingExpense ? 'Updating...' : 'Adding...'
+                    : editingExpense
+                      ? 'Update'
+                      : 'Add'}
+                </button>
+              ) : null}
+            </div>
           </div>
 
           {false && showManage && (
