@@ -24,9 +24,11 @@ import { EditIcon, DeleteIcon } from '../components/Icons';
 
 export default function PrinterPage() {
   const router = useRouter();
-  const { username, loading } = useSupabase();
+  const { username, loading, supabase } = useSupabase();
   const [expenses, setExpenses] = useState<PrinterExpense[]>([]);
   const [cartridges, setCartridges] = useState<CartridgeReplacement[]>([]);
+  const [expensesLoading, setExpensesLoading] = useState(true);
+  const [cartridgesLoading, setCartridgesLoading] = useState(true);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddCartridge, setShowAddCartridge] = useState(false);
   const [padMode, setPadMode] = useState(true);
@@ -69,11 +71,68 @@ export default function PrinterPage() {
         }
       }
     }
-  }, [username, loading, router]);
 
-  const loadData = () => {
-    setExpenses(getPrinterExpenses());
-    setCartridges(getCartridgeReplacements());
+    // Subscribe to real-time changes
+    if (supabase && username) {
+      const expensesChannel = supabase
+        .channel('printer-expenses-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'printer_expenses',
+            filter: `username=eq.${username}`,
+          },
+          () => {
+            loadData();
+          }
+        )
+        .subscribe();
+
+      const cartridgesChannel = supabase
+        .channel('printer-cartridges-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'printer_cartridges',
+            filter: `username=eq.${username}`,
+          },
+          () => {
+            loadData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(expensesChannel);
+        supabase.removeChannel(cartridgesChannel);
+      };
+    }
+  }, [username, loading, router, supabase]);
+
+  const loadData = async () => {
+    if (!username) return;
+    
+    try {
+      setExpensesLoading(true);
+      setCartridgesLoading(true);
+      
+      const [expensesData, cartridgesData] = await Promise.all([
+        getPrinterExpenses(),
+        getCartridgeReplacements(),
+      ]);
+      
+      setExpenses(expensesData);
+      setCartridges(cartridgesData);
+    } catch (error) {
+      console.error('Error loading printer data:', error);
+    } finally {
+      setExpensesLoading(false);
+      setCartridgesLoading(false);
+    }
   };
 
   const parsePadInput = (input: string) => {
@@ -140,7 +199,7 @@ export default function PrinterPage() {
     return { pages, type, cost };
   };
 
-  const handlePadSubmit = () => {
+  const handlePadSubmit = async () => {
     const parsed = parsePadInput(padInput);
     if (!parsed || !parsed.pages) {
       alert('Please enter pages and type. Example: "6 bw" or "10 color"');
@@ -155,7 +214,7 @@ export default function PrinterPage() {
       return;
     }
 
-    addPrinterExpense({
+    await addPrinterExpense({
       date: expenseDate,
       pages,
       type: parsed.type,
@@ -163,11 +222,11 @@ export default function PrinterPage() {
     });
 
     setPadInput('');
-    loadData();
+    await loadData();
     hapticFeedback('light');
   };
 
-  const handleManualExpenseSubmit = (e: React.FormEvent) => {
+  const handleManualExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const pages = parseFloat(expensePages);
     const cost = parseFloat(expenseCost);
@@ -177,7 +236,7 @@ export default function PrinterPage() {
       return;
     }
 
-    addPrinterExpense({
+    await addPrinterExpense({
       date: expenseDate,
       pages,
       type: expenseType,
@@ -187,11 +246,11 @@ export default function PrinterPage() {
     setExpensePages('');
     setExpenseCost('');
     setShowAddExpense(false);
-    loadData();
+    await loadData();
     hapticFeedback('light');
   };
 
-  const handleCartridgeSubmit = (e: React.FormEvent) => {
+  const handleCartridgeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cost = parseFloat(cartridgeCost);
 
@@ -200,7 +259,7 @@ export default function PrinterPage() {
       return;
     }
 
-    addCartridgeReplacement({
+    await addCartridgeReplacement({
       date: cartridgeDate,
       type: cartridgeType,
       cost,
@@ -208,32 +267,51 @@ export default function PrinterPage() {
 
     setCartridgeCost('');
     setShowAddCartridge(false);
-    loadData();
+    await loadData();
     hapticFeedback('light');
   };
 
-  const handleDeleteExpense = (id: string) => {
+  const handleDeleteExpense = async (id: string) => {
     hapticFeedback('medium');
     if (confirm('Delete this printer expense?')) {
-      removePrinterExpense(id);
-      loadData();
+      await removePrinterExpense(id);
+      await loadData();
     }
   };
 
-  const handleDeleteCartridge = (id: string) => {
+  const handleDeleteCartridge = async (id: string) => {
     hapticFeedback('medium');
     if (confirm('Delete this cartridge replacement?')) {
-      removeCartridgeReplacement(id);
-      loadData();
+      await removeCartridgeReplacement(id);
+      await loadData();
     }
   };
 
-  const bwCostPerPage = calculateCostPerPage('black_white');
-  const colorCostPerPage = calculateCostPerPage('color');
-  const totalBwPages = getTotalPages('black_white');
-  const totalColorPages = getTotalPages('color');
-  const totalBwCost = getTotalCost('black_white');
-  const totalColorCost = getTotalCost('color');
+  // Calculate stats (using state values)
+  const bwCostPerPage = expenses.length > 0 && cartridges.length > 0
+    ? (async () => {
+        const bwCartridges = cartridges.filter((c) => c.type === 'black_white');
+        const bwExpenses = expenses.filter((e) => e.type === 'black_white');
+        const totalCartridgeCost = bwCartridges.reduce((sum, c) => sum + c.cost, 0);
+        const totalPages = bwExpenses.reduce((sum, e) => sum + e.pages, 0);
+        return totalPages > 0 ? totalCartridgeCost / totalPages : 0;
+      })()
+    : Promise.resolve(0);
+
+  const colorCostPerPage = expenses.length > 0 && cartridges.length > 0
+    ? (async () => {
+        const colorCartridges = cartridges.filter((c) => c.type === 'color');
+        const colorExpenses = expenses.filter((e) => e.type === 'color');
+        const totalCartridgeCost = colorCartridges.reduce((sum, c) => sum + c.cost, 0);
+        const totalPages = colorExpenses.reduce((sum, e) => sum + e.pages, 0);
+        return totalPages > 0 ? totalCartridgeCost / totalPages : 0;
+      })()
+    : Promise.resolve(0);
+
+  const totalBwPages = expenses.filter((e) => e.type === 'black_white').reduce((sum, e) => sum + e.pages, 0);
+  const totalColorPages = expenses.filter((e) => e.type === 'color').reduce((sum, e) => sum + e.pages, 0);
+  const totalBwCost = expenses.filter((e) => e.type === 'black_white').reduce((sum, e) => sum + e.cost, 0);
+  const totalColorCost = expenses.filter((e) => e.type === 'color').reduce((sum, e) => sum + e.cost, 0);
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
@@ -509,7 +587,11 @@ export default function PrinterPage() {
               <h2 className="text-ios-title-3 text-black dark:text-white">Print Expenses</h2>
             </div>
             <div className="divide-y divide-black/10 dark:divide-white/10">
-              {expenses.length === 0 ? (
+              {expensesLoading ? (
+                <div className="px-3 sm:px-4 py-3 text-center">
+                  <p className="text-ios-body text-black/60 dark:text-white/60">Loading expenses...</p>
+                </div>
+              ) : expenses.length === 0 ? (
                 <div className="px-3 sm:px-4 py-3 text-center">
                   <p className="text-ios-body text-black/60 dark:text-white/60">
                     No print expenses yet
