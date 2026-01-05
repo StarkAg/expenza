@@ -50,6 +50,25 @@ export default function PrinterPage() {
       return;
     }
     loadData();
+    
+    // Check if we have an expense from transactions to add
+    if (typeof window !== 'undefined') {
+      const printerExpense = sessionStorage.getItem('printerExpense');
+      if (printerExpense) {
+        try {
+          const expense = JSON.parse(printerExpense);
+          // Pre-fill the form with expense data
+          setExpenseDate(expense.date || new Date().toISOString().split('T')[0]);
+          setExpenseCost(expense.amount || '');
+          setPadMode(false); // Show manual form
+          setShowAddExpense(true);
+          sessionStorage.removeItem('printerExpense');
+        } catch (error) {
+          console.error('Error parsing printer expense:', error);
+          sessionStorage.removeItem('printerExpense');
+        }
+      }
+    }
   }, [username, loading, router]);
 
   const loadData = () => {
