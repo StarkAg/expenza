@@ -481,6 +481,39 @@ export default function AddExpensePage() {
                 )}
               </div>
             )}
+            {!showManage && !editingExpense && (
+              <div className="flex gap-2">
+                {padMode ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePadSubmit(e as any);
+                    }}
+                    disabled={loading || !padInput.trim()}
+                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Adding...' : 'Add'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSubmit(e as any);
+                    }}
+                    disabled={loading || !amount || parseFloat(amount) <= 0}
+                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading
+                      ? 'Adding...'
+                      : editingExpense
+                        ? 'Update'
+                        : 'Add'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {showManage && (
@@ -700,13 +733,6 @@ export default function AddExpensePage() {
                   className="flex-1 min-h-[400px] px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
-                <button
-                  type="submit"
-                  disabled={loading || !padInput.trim()}
-                  className="mt-4 w-full py-3 sm:py-4 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Adding...' : 'Add Expense'}
-                </button>
               </form>
             </div>
           ) : (
@@ -846,20 +872,6 @@ export default function AddExpensePage() {
                 disabled={loading}
               />
             </div>
-
-            <button
-              type="submit"
-              disabled={loading || !amount || parseFloat(amount) <= 0}
-              className="w-full py-3 sm:py-4 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
-            >
-              {loading
-                ? editingExpense
-                  ? 'Updating...'
-                  : 'Adding...'
-                : editingExpense
-                  ? 'Update Expense'
-                  : 'Add Expense'}
-            </button>
           </form>
           )}
           </>
