@@ -455,7 +455,7 @@ export default function AddExpensePage() {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
       <main className="flex-1 overflow-hidden pb-safe-bottom flex flex-col min-h-0">
-        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 md:px-5 lg:px-5 pt-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
           <div className="flex justify-between items-center mb-2 sm:mb-3 flex-shrink-0">
             {!editingExpense && (
               <div className="flex gap-2">
@@ -742,7 +742,7 @@ export default function AddExpensePage() {
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="w-full h-40 px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-3/4 mx-auto h-48 px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
               </form>
