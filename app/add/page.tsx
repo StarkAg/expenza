@@ -462,38 +462,21 @@ export default function AddExpensePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setShowManage(!showManage);
+                    setPadMode(!padMode);
                     hapticFeedback('light');
                   }}
                   className={`p-2.5 sm:p-3 rounded-ios border transition-colors ${
-                    showManage
+                    padMode
                       ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                       : 'bg-white dark:bg-black text-black dark:text-white border-black/20 dark:border-white/20'
                   }`}
-                  aria-label="Toggle manage mode"
+                  aria-label="Toggle pad mode"
                 >
-                  {showManage ? '✕' : '⚙'}
+                  <CalculatorIcon size={20} />
                 </button>
-                {!showManage && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPadMode(!padMode);
-                      hapticFeedback('light');
-                    }}
-                    className={`p-2.5 sm:p-3 rounded-ios border transition-colors ${
-                      padMode
-                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                        : 'bg-white dark:bg-black text-black dark:text-white border-black/20 dark:border-white/20'
-                    }`}
-                    aria-label="Toggle pad mode"
-                  >
-                    <CalculatorIcon size={20} />
-                  </button>
-                )}
               </div>
             )}
-            {!showManage && !editingExpense && (
+            {!editingExpense && (
               <div className="flex gap-2">
                 {padMode ? (
                   <button
@@ -528,7 +511,7 @@ export default function AddExpensePage() {
             )}
           </div>
 
-          {showManage && (
+          {false && showManage && (
             <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6 flex-1 min-h-0 overflow-y-auto">
               {/* Accounts Section */}
               <div>
@@ -700,8 +683,7 @@ export default function AddExpensePage() {
             </div>
           )}
 
-          {!showManage && (
-            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {padMode ? (
             <div className="flex flex-col flex-1 min-h-0">
               <form onSubmit={handlePadSubmit} className="flex flex-col flex-1 min-h-0">
@@ -719,7 +701,7 @@ export default function AddExpensePage() {
                         <select
                           value={selectedAccountId}
                           onChange={(e) => setSelectedAccountId(e.target.value)}
-                          className="w-[98%] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                          className="w-[98%] mx-auto px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                           disabled={loading}
                         >
                           <option value="">None</option>
@@ -742,7 +724,7 @@ export default function AddExpensePage() {
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="w-[98%] h-[400px] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-[98%] mx-auto h-[400px] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                   autoFocus
                 />
               </form>
@@ -887,7 +869,6 @@ export default function AddExpensePage() {
           </form>
           )}
           </div>
-          )}
         </div>
       </main>
       <BottomNav />
