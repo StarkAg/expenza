@@ -192,10 +192,46 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleDownloadReport = () => {
+    if (!username) return;
+    
+    hapticFeedback('light');
+    const reportUrl = `/api/report?username=${encodeURIComponent(username)}`;
+    window.open(reportUrl, '_blank');
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-32 sm:pb-36">
+          {/* Download Report Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleDownloadReport}
+              disabled={expensesLoading || expenses.length === 0}
+              className="w-full px-4 py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Download Expense Report</span>
+            </button>
+            <p className="text-ios-caption-1 text-black/60 dark:text-white/60 text-center mt-2">
+              Opens in a new window. Use Print → Save as PDF to download.
+            </p>
+          </div>
+
           <ExpenseList
             expenses={expenses}
             loading={expensesLoading}
