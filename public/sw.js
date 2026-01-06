@@ -18,8 +18,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
       // Clean up old caches
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
               return caches.delete(cacheName);

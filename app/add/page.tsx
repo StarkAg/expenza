@@ -357,6 +357,232 @@ export default function AddExpensePage() {
     }
   };
 
+  const handlePadRefund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !padInput.trim()) return;
+
+    const parsedExpenses = parsePadInput(padInput);
+    if (!parsedExpenses || parsedExpenses.length === 0) {
+      hapticFeedback('medium');
+      return;
+    }
+
+    // Validate all amounts
+    const validExpenses = parsedExpenses.filter(
+      (exp) => exp.amount && parseFloat(exp.amount) > 0
+    );
+
+    if (validExpenses.length === 0) {
+      hapticFeedback('medium');
+      return;
+    }
+
+    hapticFeedback('medium');
+    setLoading(true);
+
+    const expenseDate = new Date().toISOString().split('T')[0];
+    const refundsToInsert = validExpenses.map((exp) => ({
+      username: username,
+      amount: parseFloat(exp.amount).toFixed(2),
+      category: exp.category.trim() || '',
+      note: (exp.note ? `Refund: ${exp.note}` : 'Refund').trim() || null,
+      date: expenseDate,
+      account_id: selectedAccountId || null,
+    }));
+
+    try {
+      if (typeof window !== 'undefined' && navigator.onLine) {
+        const { error } = await supabase.from('expenses').insert(refundsToInsert);
+        if (error) throw error;
+
+        // Credit to selected bank account if one is selected (refund adds money)
+        if (selectedAccountId) {
+          const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
+          if (selectedAccount && selectedAccount.type === 'bank') {
+            const totalAmount = validExpenses.reduce(
+              (sum, exp) => sum + parseFloat(exp.amount),
+              0
+            );
+            const newBalance = parseFloat(selectedAccount.balance) + totalAmount; // Credit (add)
+            const { error: accountError } = await supabase
+              .from('accounts')
+              .update({ balance: newBalance })
+              .eq('id', selectedAccountId)
+              .eq('username', username);
+            if (accountError) {
+              console.error('Error updating account balance:', accountError);
+            } else {
+              // Reload accounts to update the balance in UI
+              await loadAccounts();
+            }
+          }
+        }
+      } else if (typeof window !== 'undefined') {
+        // Store offline for later sync
+        const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
+        pending.push(...refundsToInsert);
+        localStorage.setItem('pendingExpenses', JSON.stringify(pending));
+      }
+
+      // Clear pad input and reset
+      setPadInput('');
+      hapticFeedback('light');
+      
+      // Use transition for smooth navigation
+      startTransition(() => {
+        router.push('/transactions');
+      });
+    } catch (error) {
+      console.error('Error adding refunds:', error);
+      hapticFeedback('medium');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!username || !amount || parseFloat(amount) <= 0) return;
+
+    hapticFeedback('medium');
+    setLoading(true);
+
+    const expenseData = {
+      amount: parseFloat(amount).toFixed(2),
+      category: category.trim() || '',
+      note: (note.trim() ? `Refund: ${note.trim()}` : 'Refund').trim() || null,
+      date,
+    };
+
+    try {
+      if (editingExpense) {
+        // Reverse old payment if expense had an account
+        if (editingExpense.account_id && typeof window !== 'undefined' && navigator.onLine) {
+          const { data: oldAccountData, error: fetchError } = await supabase
+            .from('accounts')
+            .select('balance, type')
+            .eq('id', editingExpense.account_id)
+            .eq('username', username)
+            .single();
+          
+          if (!fetchError && oldAccountData && oldAccountData.type === 'bank') {
+            const oldAmount = parseFloat(editingExpense.amount);
+            const oldBalance = parseFloat(oldAccountData.balance);
+            const reversedBalance = oldBalance + oldAmount; // Credit back
+            
+            const { error: reverseError } = await supabase
+              .from('accounts')
+              .update({ balance: reversedBalance })
+              .eq('id', editingExpense.account_id)
+              .eq('username', username);
+            if (reverseError) {
+              console.error('Error reversing old payment:', reverseError);
+            }
+          }
+        }
+        
+        // Update existing expense as refund
+        if (typeof window !== 'undefined' && navigator.onLine) {
+          const updateData = {
+            ...expenseData,
+            account_id: selectedAccountId || null,
+          };
+          const { error } = await supabase
+            .from('expenses')
+            .update(updateData)
+            .eq('id', editingExpense.id)
+            .eq('username', username);
+          if (error) throw error;
+          
+          // Credit to account if one is selected (refund adds money)
+          if (selectedAccountId) {
+            const { data: accountData, error: fetchError } = await supabase
+              .from('accounts')
+              .select('balance, type')
+              .eq('id', selectedAccountId)
+              .eq('username', username)
+              .single();
+            
+            if (!fetchError && accountData && accountData.type === 'bank') {
+              const refundAmount = parseFloat(amount);
+              const currentBalance = parseFloat(accountData.balance);
+              const newBalance = currentBalance + refundAmount; // Credit (add)
+              const { error: accountError } = await supabase
+                .from('accounts')
+                .update({ balance: newBalance })
+                .eq('id', selectedAccountId)
+                .eq('username', username);
+              if (accountError) {
+                console.error('Error updating account balance:', accountError);
+              }
+            }
+          }
+          
+          await loadAccounts();
+        } else if (typeof window !== 'undefined') {
+          const pendingUpdates = JSON.parse(localStorage.getItem('pendingExpenseUpdates') || '[]');
+          pendingUpdates.push({ id: editingExpense.id, ...expenseData, account_id: selectedAccountId || null });
+          localStorage.setItem('pendingExpenseUpdates', JSON.stringify(pendingUpdates));
+        }
+      } else {
+        // Insert new refund
+        const newRefundData = {
+          username: username,
+          ...expenseData,
+          account_id: selectedAccountId || null,
+        };
+
+        if (typeof window !== 'undefined' && navigator.onLine) {
+          const { error } = await supabase.from('expenses').insert(newRefundData);
+          if (error) throw error;
+
+          // Credit to selected bank account if one is selected (refund adds money)
+          if (selectedAccountId) {
+            const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId);
+            if (selectedAccount && selectedAccount.type === 'bank') {
+              const refundAmount = parseFloat(amount);
+              const newBalance = parseFloat(selectedAccount.balance) + refundAmount; // Credit (add)
+              const { error: accountError } = await supabase
+                .from('accounts')
+                .update({ balance: newBalance })
+                .eq('id', selectedAccountId)
+                .eq('username', username);
+              if (accountError) {
+                console.error('Error updating account balance:', accountError);
+              } else {
+                await loadAccounts();
+              }
+            }
+          }
+        } else if (typeof window !== 'undefined') {
+          const pending = JSON.parse(localStorage.getItem('pendingExpenses') || '[]');
+          pending.push(newRefundData);
+          localStorage.setItem('pendingExpenses', JSON.stringify(pending));
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('editExpense');
+      }
+
+      setAmount('');
+      setCategory('');
+      setNote('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setEditingExpense(null);
+
+      hapticFeedback('light');
+      
+      startTransition(() => {
+        router.push('/transactions');
+      });
+    } catch (error) {
+      console.error(`Error ${editingExpense ? 'updating' : 'adding'} refund:`, error);
+      hapticFeedback('medium');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !amount || parseFloat(amount) <= 0) return;
@@ -572,17 +798,30 @@ export default function AddExpensePage() {
             )}
             <div className="flex gap-2">
               {padMode && !editingExpense ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePadSubmit(e as any);
-                  }}
-                  disabled={loading || !padInput.trim()}
-                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Adding...' : 'Add'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePadSubmit(e as any);
+                    }}
+                    disabled={loading || !padInput.trim()}
+                    className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Adding...' : 'Add'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePadRefund(e as any);
+                    }}
+                    disabled={loading || !padInput.trim()}
+                    className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 dark:bg-green-500 text-white text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Adding...' : 'Refund'}
+                  </button>
+                </div>
               ) : !padMode ? (
                 <button
                   type="button"
@@ -957,6 +1196,24 @@ export default function AddExpensePage() {
                 className="w-[98%] mx-auto px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 disabled={loading}
               />
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                type="submit"
+                disabled={loading || !amount || parseFloat(amount) <= 0}
+                className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editingExpense ? 'Update Expense' : 'Add Expense'}
+              </button>
+              <button
+                type="button"
+                onClick={handleRefund}
+                disabled={loading || !amount || parseFloat(amount) <= 0}
+                className="flex-1 px-4 py-3 bg-green-600 dark:bg-green-500 text-white text-ios-body font-semibold rounded-ios active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editingExpense ? 'Update Refund' : 'Add Refund'}
+              </button>
             </div>
           </form>
           )}

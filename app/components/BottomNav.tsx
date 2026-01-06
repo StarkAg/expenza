@@ -27,7 +27,7 @@ export default function BottomNav() {
       if (href === '/add' && typeof window !== 'undefined') {
         sessionStorage.removeItem('editExpense');
       }
-      router.push(href);
+    router.push(href);
     });
   };
 
