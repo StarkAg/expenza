@@ -192,12 +192,96 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleDownloadReport = () => {
+  const handleDownloadReport = async () => {
     if (!username) return;
     
     hapticFeedback('light');
-    const reportUrl = `/api/report?username=${encodeURIComponent(username)}`;
-    window.open(reportUrl, '_blank');
+    
+    try {
+      // Fetch the HTML report
+      const response = await fetch(`/api/report?username=${encodeURIComponent(username)}`);
+      const html = await response.text();
+      
+      // Create a hidden iframe to render the HTML
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '210mm';
+      iframe.style.height = '297mm';
+      iframe.style.border = 'none';
+      
+      document.body.appendChild(iframe);
+      
+      // Write HTML to iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        throw new Error('Could not access iframe document');
+      }
+      
+      iframeDoc.open();
+      iframeDoc.write(html);
+      iframeDoc.close();
+      
+      // Wait for iframe to fully load
+      await new Promise((resolve) => {
+        iframe.onload = resolve;
+        setTimeout(resolve, 1000); // Fallback timeout
+      });
+      
+      // Wait for styles and images to load
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Get the body element from iframe
+      const iframeBody = iframeDoc.body;
+      if (!iframeBody) {
+        throw new Error('Could not access iframe body');
+      }
+      
+      // Import html2canvas dynamically
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Convert HTML to canvas using html2canvas
+      const canvas = await html2canvas(iframeBody, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 794, // A4 width in pixels at 96 DPI
+        height: 1123, // A4 height in pixels at 96 DPI
+        windowWidth: 794,
+        windowHeight: 1123,
+      });
+      
+      // Create PDF using jsPDF
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      // Generate filename with current date
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0].replace(/-/g, '-');
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const filename = `Expenses_${dateStr}_${timeStr}@CashBook.pdf`;
+      
+      // Download the PDF
+      pdf.save(filename);
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      alert('Failed to generate report. Please try again.');
+    }
   };
 
   return (
@@ -228,7 +312,7 @@ export default function TransactionsPage() {
               <span>Download Expense Report</span>
             </button>
             <p className="text-ios-caption-1 text-black/60 dark:text-white/60 text-center mt-2">
-              Opens in a new window. Use Print → Save as PDF to download.
+              Downloads PDF report directly to your device.
             </p>
           </div>
 
