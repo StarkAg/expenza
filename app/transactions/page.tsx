@@ -140,6 +140,9 @@ export default function TransactionsPage() {
     const expenseToDelete = expenses.find((e) => e.id === id);
     if (!expenseToDelete) return;
 
+    // Check if it's a refund (note starts with "Refund:")
+    const isRefund = expenseToDelete.note && expenseToDelete.note.toString().startsWith('Refund:');
+
     // Optimistic update
     const previousExpenses = expenses;
     setExpenses(expenses.filter((e) => e.id !== id));
@@ -158,7 +161,12 @@ export default function TransactionsPage() {
         if (!fetchError && accountData && accountData.type === 'bank') {
           const expenseAmount = parseFloat(expenseToDelete.amount);
           const currentBalance = parseFloat(accountData.balance);
-          const reversedBalance = currentBalance + expenseAmount; // Credit back
+          
+          // If it was a refund (credited), we need to debit (subtract) to reverse
+          // If it was an expense (debited), we need to credit (add) to reverse
+          const reversedBalance = isRefund 
+            ? currentBalance - expenseAmount  // Debit to reverse refund
+            : currentBalance + expenseAmount; // Credit to reverse expense
           
           const { error: accountError } = await supabase
             .from('accounts')

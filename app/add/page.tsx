@@ -455,6 +455,9 @@ export default function AddExpensePage() {
 
     try {
       if (editingExpense) {
+        // Check if old expense was a refund
+        const wasOldRefund = editingExpense.note && editingExpense.note.toString().startsWith('Refund:');
+        
         // Reverse old payment if expense had an account
         if (editingExpense.account_id && typeof window !== 'undefined' && navigator.onLine) {
           const { data: oldAccountData, error: fetchError } = await supabase
@@ -467,7 +470,12 @@ export default function AddExpensePage() {
           if (!fetchError && oldAccountData && oldAccountData.type === 'bank') {
             const oldAmount = parseFloat(editingExpense.amount);
             const oldBalance = parseFloat(oldAccountData.balance);
-            const reversedBalance = oldBalance + oldAmount; // Credit back
+            
+            // If old was refund (credited), reverse by debiting (subtract)
+            // If old was expense (debited), reverse by crediting (add)
+            const reversedBalance = wasOldRefund
+              ? oldBalance - oldAmount  // Debit to reverse refund
+              : oldBalance + oldAmount; // Credit to reverse expense
             
             const { error: reverseError } = await supabase
               .from('accounts')
@@ -495,6 +503,7 @@ export default function AddExpensePage() {
           
           // Credit to account if one is selected (refund adds money)
           if (selectedAccountId) {
+            // Fetch current account balance from database (after reversal)
             const { data: accountData, error: fetchError } = await supabase
               .from('accounts')
               .select('balance, type')
@@ -505,7 +514,7 @@ export default function AddExpensePage() {
             if (!fetchError && accountData && accountData.type === 'bank') {
               const refundAmount = parseFloat(amount);
               const currentBalance = parseFloat(accountData.balance);
-              const newBalance = currentBalance + refundAmount; // Credit (add)
+              const newBalance = currentBalance + refundAmount; // Credit (add) for refund
               const { error: accountError } = await supabase
                 .from('accounts')
                 .update({ balance: newBalance })
@@ -599,6 +608,9 @@ export default function AddExpensePage() {
 
     try {
       if (editingExpense) {
+        // Check if old expense was a refund
+        const wasOldRefund = editingExpense.note && editingExpense.note.toString().startsWith('Refund:');
+        
         // Reverse old payment if expense had an account
         if (editingExpense.account_id && typeof window !== 'undefined' && navigator.onLine) {
           // Fetch current account balance from database
@@ -612,7 +624,12 @@ export default function AddExpensePage() {
           if (!fetchError && oldAccountData && oldAccountData.type === 'bank') {
             const oldAmount = parseFloat(editingExpense.amount);
             const oldBalance = parseFloat(oldAccountData.balance);
-            const reversedBalance = oldBalance + oldAmount; // Credit back
+            
+            // If old was refund (credited), reverse by debiting (subtract)
+            // If old was expense (debited), reverse by crediting (add)
+            const reversedBalance = wasOldRefund
+              ? oldBalance - oldAmount  // Debit to reverse refund
+              : oldBalance + oldAmount; // Credit to reverse expense
             
             const { error: reverseError } = await supabase
               .from('accounts')
@@ -638,33 +655,9 @@ export default function AddExpensePage() {
             .eq('username', username);
           if (error) throw error;
           
-          // Debit from new account if different account is selected
-          if (selectedAccountId && selectedAccountId !== editingExpense.account_id) {
-            // Fetch current account balance from database
-            const { data: newAccountData, error: fetchError } = await supabase
-              .from('accounts')
-              .select('balance, type')
-              .eq('id', selectedAccountId)
-              .eq('username', username)
-              .single();
-            
-            if (!fetchError && newAccountData && newAccountData.type === 'bank') {
-              const newAmount = parseFloat(amount);
-              const currentBalance = parseFloat(newAccountData.balance);
-              const newBalance = currentBalance - newAmount;
-              const { error: accountError } = await supabase
-                .from('accounts')
-                .update({ balance: newBalance })
-                .eq('id', selectedAccountId)
-                .eq('username', username);
-              if (accountError) {
-                console.error('Error updating new account balance:', accountError);
-              }
-            }
-          } else if (selectedAccountId && selectedAccountId === editingExpense.account_id) {
-            // Same account, debit the new amount (we already credited back the old amount)
-            const newAmount = parseFloat(amount);
-            // Fetch current account balance from database (after we credited back old amount)
+          // Apply new expense (debit) - this is a regular expense, not a refund
+          if (selectedAccountId) {
+            // Fetch current account balance from database (after reversal)
             const { data: accountData, error: fetchError } = await supabase
               .from('accounts')
               .select('balance, type')
@@ -673,16 +666,16 @@ export default function AddExpensePage() {
               .single();
             
             if (!fetchError && accountData && accountData.type === 'bank') {
-              // Current balance already has old amount credited, now debit new amount
+              const newAmount = parseFloat(amount);
               const currentBalance = parseFloat(accountData.balance);
-              const adjustedBalance = currentBalance - newAmount;
+              const newBalance = currentBalance - newAmount; // Debit for expense
               const { error: accountError } = await supabase
                 .from('accounts')
-                .update({ balance: adjustedBalance })
+                .update({ balance: newBalance })
                 .eq('id', selectedAccountId)
                 .eq('username', username);
               if (accountError) {
-                console.error('Error adjusting account balance:', accountError);
+                console.error('Error updating account balance:', accountError);
               }
             }
           }
