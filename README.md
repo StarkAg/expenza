@@ -1,3 +1,20 @@
+# Expenza - Expense Tracker
+
+A production-ready iPhone-like expense tracker web app built with Next.js 14, Tailwind CSS, and Supabase.
+
+> Last updated: January 2025
+
+## Features
+
+- 🎨 **Native iOS Feel** - Designed to feel like a native iPhone app when added to Home Screen
+- 🔐 **Username-Only Auth** - Simple username authentication, no passwords or email verification
+- ⚡ **Instant UI Feedback** - Optimistic updates and skeleton loaders
+- 🚀 **Zero Full Page Reloads** - Smooth client-side navigation
+- 📱 **Bottom Tab Navigation** - iOS-style navigation bar
+- 🔄 **Offline-First** - Works offline with service worker caching
+- 🌙 **Dark Mode** - Automatic dark mode support
+- 📊 **Smart Analytics** - Daily/monthly totals and category breakdowns
+
 ## Tech Stack
 
 - **Next.js 14** (App Router)
