@@ -766,10 +766,10 @@ export default function AddExpensePage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
+    <div className="add-screen flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
       <main className="flex-1 overflow-hidden pb-safe-bottom flex flex-col min-h-0">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="flex justify-between items-center mb-2 sm:mb-3 flex-shrink-0">
+          <div className="add-toolbar flex justify-between items-center mb-2 sm:mb-3 flex-shrink-0">
             {!editingExpense && (
               <div className="flex gap-2">
                 <button
@@ -778,7 +778,7 @@ export default function AddExpensePage() {
                     setPadMode(!padMode);
                     hapticFeedback('light');
                   }}
-                  className={`p-2.5 sm:p-3 rounded-ios border transition-colors ${
+                  className={`add-mode-toggle p-2.5 sm:p-3 rounded-ios border transition-colors ${
                     padMode
                       ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                       : 'bg-white dark:bg-black text-black dark:text-white border-black/20 dark:border-white/20'
@@ -799,7 +799,7 @@ export default function AddExpensePage() {
                       handlePadSubmit(e as any);
                     }}
                     disabled={loading || !padInput.trim()}
-                    className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="add-primary flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Adding...' : 'Add'}
                   </button>
@@ -810,7 +810,7 @@ export default function AddExpensePage() {
                       handlePadRefund(e as any);
                     }}
                     disabled={loading || !padInput.trim()}
-                    className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 dark:bg-green-500 text-white text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="add-refund flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 dark:bg-green-500 text-white text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Adding...' : 'Refund'}
                   </button>
@@ -823,7 +823,7 @@ export default function AddExpensePage() {
                     handleSubmit(e as any);
                   }}
                   disabled={loading || !amount || parseFloat(amount) <= 0}
-                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="add-primary px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black text-ios-body font-semibold rounded-ios-lg active:opacity-80 disabled:cursor-not-allowed"
                 >
                   {loading
                     ? editingExpense ? 'Updating...' : 'Adding...'
@@ -1010,10 +1010,13 @@ export default function AddExpensePage() {
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {padMode ? (
             <div className="flex flex-col flex-1 min-h-0">
-              <form onSubmit={handlePadSubmit} className="flex flex-col flex-1 min-h-0">
-                <label className="block text-ios-caption-1 font-semibold text-black dark:text-white mb-2">
+              <form onSubmit={handlePadSubmit} className="quick-entry flex flex-col flex-1 min-h-0">
+                <label className="quick-entry__label block text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
                   Quick Entry
                 </label>
+                <p className="quick-entry__help text-ios-caption-1 mb-2">
+                  Paste a bank message or type an expense in plain language.
+                </p>
                 {(() => {
                   const bankAccounts = accounts.filter((acc) => acc.type === 'bank');
                   if (bankAccounts.length > 0) {
@@ -1043,12 +1046,12 @@ export default function AddExpensePage() {
                 <textarea
                   value={padInput}
                   onChange={(e) => setPadInput(e.target.value)}
-                  placeholder=""
+                  placeholder={'Paste a transaction message here…\n\nExample: Paid ₹240 to Rapido'}
                   inputMode="text"
                   autoCapitalize="sentences"
                   autoCorrect="on"
                   spellCheck="true"
-                  className="w-[98%] mx-auto h-[400px] px-2.5 py-2 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="quick-entry__textarea w-[98%] mx-auto h-[400px] px-2.5 py-2 text-ios-body rounded-ios focus:outline-none resize-none"
                   autoFocus
                 />
               </form>

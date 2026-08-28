@@ -801,3 +801,62 @@ body button[class~='dark:bg-white']:disabled {
   color: rgb(245 245 242 / 0.58) !important;
   opacity: 1;
 }
+
+/* The Add screen is the primary phone workflow. Its controls get explicit
+   colors so text, SVG icons, and empty states remain visible before focus. */
+.add-toolbar .add-mode-toggle {
+  border-color: var(--expenza-line) !important;
+  background: var(--expenza-surface-raised) !important;
+  color: var(--expenza-ink) !important;
+}
+
+.add-toolbar .add-mode-toggle svg {
+  color: inherit !important;
+  stroke: currentColor;
+}
+
+.add-primary {
+  min-height: 3.25rem;
+  background: #f5f5f2 !important;
+  color: #080808 !important;
+}
+
+.add-primary:disabled {
+  background: rgb(245 245 242 / 0.16) !important;
+  color: rgb(245 245 242 / 0.62) !important;
+  opacity: 1;
+}
+
+.add-refund {
+  min-height: 3.25rem;
+  background: #1b7f45 !important;
+  color: #f4fbf6 !important;
+}
+
+.add-refund:disabled {
+  background: rgb(107 191 138 / 0.2) !important;
+  color: rgb(218 244 226 / 0.68) !important;
+  opacity: 1;
+}
+
+.quick-entry__label {
+  color: var(--expenza-ink) !important;
+}
+
+.quick-entry__help {
+  color: rgb(245 245 242 / 0.62) !important;
+}
+
+.quick-entry__textarea {
+  min-height: 18rem;
+  border: 1px solid var(--expenza-line) !important;
+  background: #101010 !important;
+  color: var(--expenza-ink) !important;
+  caret-color: var(--expenza-accent);
+  line-height: 1.55;
+}
+
+.quick-entry__textarea::placeholder {
+  color: rgb(245 245 242 / 0.48) !important;
+  opacity: 1;
+}
