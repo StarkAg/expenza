@@ -1,6 +1,5 @@
-// Category utilities with Supabase sync support
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
+// Category utilities backed by the shared Convex database.
+import { createConvexDatabase, type ConvexDatabase } from '../lib/convexDb';
 
 const DEFAULT_CATEGORIES = [
   'Food',
@@ -46,13 +45,10 @@ export interface Category {
   display_order?: number;
 }
 
-// Get Supabase client
-function getSupabaseClient(): SupabaseClient | null {
+function getDatabase(): ConvexDatabase | null {
   if (typeof window === 'undefined') return null;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return null;
-  return createClient(supabaseUrl, supabaseKey);
+  if (!process.env.NEXT_PUBLIC_CONVEX_URL) return null;
+  return createConvexDatabase();
 }
 
 // Get username from localStorage
@@ -78,7 +74,7 @@ export async function getCategories(): Promise<Category[]> {
     }));
   }
 
-  const supabase = getSupabaseClient();
+  const supabase = getDatabase();
   
   // Try Supabase first
   if (supabase && navigator.onLine) {
@@ -152,7 +148,7 @@ export async function getCategories(): Promise<Category[]> {
 
 // Sync categories to Supabase
 async function syncCategoriesToSupabase(categories: Category[], username: string) {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabase();
   if (!supabase || !navigator.onLine) return;
 
   try {
@@ -267,7 +263,7 @@ export async function resetCategories() {
   const username = getUsername();
   if (!username) return;
 
-  const supabase = getSupabaseClient();
+  const supabase = getDatabase();
   if (supabase && navigator.onLine) {
     try {
       await supabase.from('categories').delete().eq('username', username);

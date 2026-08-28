@@ -1,6 +1,7 @@
 'use client';
 
 import { formatCurrency } from '../utils/currency';
+import { AccountIcon } from './Icons';
 
 interface Account {
   id: string;
@@ -42,8 +43,8 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
             className="flex justify-between items-center p-2 sm:p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios w-full max-w-md mx-auto"
           >
             <div className="flex items-center gap-2">
-              <span className="text-ios-body text-black/60 dark:text-white/60">
-                {account.type === 'credit_card' ? '💳' : '🏦'}
+              <span className="account-list-icon text-black/60 dark:text-white/60">
+                <AccountIcon type={account.type} size={18} />
               </span>
               <span className="text-ios-body text-black dark:text-white">{account.name}</span>
             </div>
@@ -70,4 +71,3 @@ export default function AccountsList({ accounts, loading }: AccountsListProps) {
     </div>
   );
 }
-

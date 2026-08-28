@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { generateReportHTML } from '../../utils/report';
+import { listRows } from '../../lib/convexServer';
+
+// Reads nextUrl.searchParams, so it can never be statically rendered.
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,47 +14,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Username is required' }, { status: 400 });
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Fetch expenses
-    const { data: expenses, error } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('username', username)
-      .order('date', { ascending: true })
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching expenses:', error);
-      return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
-    }
+    const expenses = (await listRows('expenses', username))
+      .sort((a, b) => `${a.date}:${a.created_at}`.localeCompare(`${b.date}:${b.created_at}`));
 
     // Fetch accounts for expense account_ids
     const accountIds = [...new Set((expenses || []).map((e: any) => e.account_id).filter(Boolean))];
     let accountsMap = new Map();
     
     if (accountIds.length > 0) {
-      const { data: accounts } = await supabase
-        .from('accounts')
-        .select('id, name, type')
-        .in('id', accountIds)
-        .eq('username', username);
-      
-      if (accounts) {
-        accountsMap = new Map(accounts.map((acc: any) => [acc.id, acc]));
-      }
+      const accounts = (await listRows('accounts', username)).filter((account) => accountIds.includes(account.id));
+      accountsMap = new Map(accounts.map((acc: any) => [acc.id, acc]));
     }
 
     // Map expenses to include account data
-    const mappedExpenses = (expenses || []).map((expense: any) => ({
+    const mappedExpenses = expenses.map((expense: any) => ({
       ...expense,
       account: expense.account_id ? accountsMap.get(expense.account_id) || null : null,
     }));
@@ -83,4 +59,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

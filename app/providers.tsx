@@ -1,15 +1,15 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { createConvexDatabase, type ConvexDatabase } from './lib/convexDb';
 import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate';
 import { checkAndProcessFixedExpenses } from './utils/fixedExpenses';
 
 type ThemeMode = 'light' | 'dark' | 'system';
 
 const SupabaseContext = createContext<{
-  supabase: SupabaseClient;
+  supabase: ConvexDatabase;
   username: string | null;
   loading: boolean;
   themeMode: ThemeMode;
@@ -28,12 +28,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // Enable service worker update detection and auto-refresh
   useServiceWorkerUpdate();
 
-  const [supabase] = useState(() =>
-    createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  );
+  const [supabase] = useState(() => createConvexDatabase());
+  const [convex] = useState(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!));
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
@@ -70,7 +66,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const storedTheme = localStorage.getItem('theme_mode') as ThemeMode | null;
     const initialTheme: ThemeMode = (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system') 
       ? storedTheme 
-      : 'system';
+      : 'dark';
     
     setThemeModeState(initialTheme);
 
@@ -162,9 +158,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [darkMode]);
 
   return (
-    <SupabaseContext.Provider value={{ supabase, username, loading, themeMode, setThemeMode }}>
-      {children}
-    </SupabaseContext.Provider>
+    <ConvexProvider client={convex}>
+      <SupabaseContext.Provider value={{ supabase, username, loading, themeMode, setThemeMode }}>
+        {children}
+      </SupabaseContext.Provider>
+    </ConvexProvider>
   );
 }
-

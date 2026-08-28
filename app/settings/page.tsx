@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '../providers';
 import BottomNav from '../components/BottomNav';
 import { hapticFeedback } from '../utils/haptics';
-import { EditIcon, DeleteIcon, GripVerticalIcon, AddIcon, SunIcon, MoonIcon, HalfMoonIcon } from '../components/Icons';
+import { EditIcon, DeleteIcon, GripVerticalIcon, AddIcon, SunIcon, MoonIcon, HalfMoonIcon, AccountIcon } from '../components/Icons';
 import { formatCurrency } from '../utils/currency';
 import {
   getCategories,
@@ -536,6 +536,40 @@ export default function SettingsPage() {
               </button>
             </div>
 
+            {/* Auto-Tracking Section */}
+            <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  hapticFeedback('light');
+                  router.push('/settings/auto-tracker');
+                }}
+                className="w-full px-3 sm:px-4 py-3 sm:py-4 text-left active:bg-black/5 dark:active:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-ios-title-3 text-black dark:text-white">Auto-Tracking</h2>
+                    <p className="text-ios-caption-1 text-black/60 dark:text-white/60 mt-0.5">
+                      Turn bank SMS into expenses automatically
+                    </p>
+                  </div>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-black/40 dark:text-white/40"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+
             {/* Accounts Section */}
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg overflow-hidden">
               <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-black/10 dark:border-white/10 flex justify-between items-center">
@@ -644,8 +678,8 @@ export default function SettingsPage() {
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-ios-body">
-                                {account.type === 'credit_card' ? '💳' : '🏦'}
+                              <span className="account-list-icon">
+                                <AccountIcon type={account.type} size={18} />
                               </span>
                               <span className="text-ios-body text-black dark:text-white">{account.name}</span>
                             </div>

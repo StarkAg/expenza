@@ -7,6 +7,7 @@ import BottomNav from '../components/BottomNav';
 import AccountsList from '../components/AccountsList';
 import { hapticFeedback } from '../utils/haptics';
 import { formatCurrency } from '../utils/currency';
+import { AccountIcon } from '../components/Icons';
 
 export default function AccountsPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function AccountsPage() {
   const [name, setName] = useState('');
   const [type, setType] = useState<'credit_card' | 'bank'>('bank');
   const [balance, setBalance] = useState('');
+  const [last4, setLast4] = useState('');
 
   useEffect(() => {
     if (authLoading) return;
@@ -61,6 +63,8 @@ export default function AccountsPage() {
       name: name.trim(),
       type,
       balance: parseFloat(balance),
+      // Used to match incoming bank SMS to this account.
+      last4: last4.trim() || null,
     };
 
     try {
@@ -78,6 +82,7 @@ export default function AccountsPage() {
 
       setName('');
       setBalance('');
+      setLast4('');
       setType('bank');
       setEditingAccount(null);
       setShowForm(false);
@@ -96,6 +101,7 @@ export default function AccountsPage() {
     setName(account.name);
     setType(account.type);
     setBalance(account.balance.toString());
+    setLast4(account.last4 || '');
     setShowForm(true);
     hapticFeedback('light');
   };
@@ -119,6 +125,7 @@ export default function AccountsPage() {
   const handleCancel = () => {
     setName('');
     setBalance('');
+    setLast4('');
     setType('bank');
     setEditingAccount(null);
     setShowForm(false);
@@ -154,8 +161,8 @@ export default function AccountsPage() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-ios-body text-black/60 dark:text-white/60">
-                            {account.type === 'credit_card' ? '💳' : '🏦'}
+                          <span className="account-list-icon text-black/60 dark:text-white/60">
+                            <AccountIcon type={account.type} size={18} />
                           </span>
                           <span className="text-ios-body text-black dark:text-white">{account.name}</span>
                         </div>
@@ -250,6 +257,29 @@ export default function AccountsPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
+                  Last 4 digits <span className="font-normal text-black/40 dark:text-white/40">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={last4}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d{0,4}$/.test(v)) setLast4(v);
+                  }}
+                  placeholder="4821"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  disabled={loading}
+                />
+                <p className="text-ios-caption-1 text-black/40 dark:text-white/40 mt-1.5">
+                  Match what your bank SMS shows (&quot;A/c XX4821&quot;). Required for
+                  auto-tracking to add expenses to this account.
+                </p>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -275,4 +305,3 @@ export default function AccountsPage() {
     </div>
   );
 }
-

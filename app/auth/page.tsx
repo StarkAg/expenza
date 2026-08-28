@@ -60,10 +60,16 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black px-3 sm:px-4 md:px-6">
+    <div className="auth-screen flex items-center justify-center min-h-screen px-3 sm:px-4 md:px-6">
       <div className="w-full max-w-md lg:max-w-lg">
-
-        <div className="space-y-3 sm:space-y-4">
+        <div className="auth-brand text-center mb-8">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static PWA mark is already a 192px local asset */}
+          <img className="auth-brand__logo" src="/icon-192.png" alt="Expenza" />
+          <p className="auth-brand__eyebrow">PERSONAL FINANCE, SIMPLIFIED</p>
+          <h1 className="auth-brand__title">Know where every rupee goes.</h1>
+          <p className="auth-brand__copy">Keep your spending, accounts, and monthly bills in one calm place.</p>
+        </div>
+        <div className="auth-card space-y-3 sm:space-y-4">
           <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-4">
             <div>
               <input
@@ -75,11 +81,11 @@ export default function AuthPage() {
                 minLength={3}
                 maxLength={20}
                 pattern="[a-zA-Z0-9_]{3,20}"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="auth-input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-ios-body rounded-ios focus:outline-none"
                 disabled={loading}
                 autoFocus
               />
-              <p className="text-ios-caption-2 text-black/50 dark:text-white/50 mt-1 px-1">
+              <p className="auth-input-hint text-ios-caption-2 mt-1 px-1">
                 3-20 characters (letters, numbers, underscore)
               </p>
             </div>
@@ -87,13 +93,13 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading || !username.trim()}
-              className="w-full py-3 sm:py-4 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
+              className="auth-submit w-full py-3 sm:py-4 text-ios-headline font-semibold rounded-ios-lg disabled:cursor-not-allowed active:opacity-80"
             >
               {loading ? 'Signing in...' : 'Continue'}
             </button>
 
             {message && (
-              <p className="text-ios-caption-1 text-center text-black dark:text-white">
+              <p className="auth-message text-ios-caption-1 text-center">
                 {message}
               </p>
             )}
@@ -103,4 +109,3 @@ export default function AuthPage() {
     </div>
   );
 }
-

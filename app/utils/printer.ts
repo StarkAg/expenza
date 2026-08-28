@@ -1,6 +1,5 @@
-// Printer expense tracking utilities with Supabase sync support
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
+// Printer expense tracking utilities backed by Convex.
+import { createConvexDatabase, type ConvexDatabase } from '../lib/convexDb';
 
 export interface PrinterExpense {
   id: string;
@@ -20,13 +19,10 @@ export interface CartridgeReplacement {
   created_at: string;
 }
 
-// Get Supabase client
-function getSupabaseClient(): SupabaseClient | null {
+function getSupabaseClient(): ConvexDatabase | null {
   if (typeof window === 'undefined') return null;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return null;
-  return createClient(supabaseUrl, supabaseKey);
+  if (!process.env.NEXT_PUBLIC_CONVEX_URL) return null;
+  return createConvexDatabase();
 }
 
 // Get username from localStorage

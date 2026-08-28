@@ -12,7 +12,7 @@ const config: Config = {
       colors: {
         // iOS-style colors
         ios: {
-          blue: '#007AFF',
+          blue: '#D6923C',
           green: '#34C759',
           indigo: '#5856D6',
           orange: '#FF9500',
@@ -80,5 +80,4 @@ const config: Config = {
 };
 
 export default config;
-
 

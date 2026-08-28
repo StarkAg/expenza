@@ -6,7 +6,7 @@ import { useSupabase } from '../providers';
 import BottomNav from '../components/BottomNav';
 import { hapticFeedback } from '../utils/haptics';
 import { format, addDays, subDays } from 'date-fns';
-import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, CalculatorIcon } from '../components/Icons';
+import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, CalculatorIcon, AccountIcon } from '../components/Icons';
 import { getCategoryNames } from '../utils/categories';
 import { formatCurrency } from '../utils/currency';
 
@@ -856,7 +856,7 @@ export default function AddExpensePage() {
                         className="flex justify-between items-center p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios"
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="text-lg">{account.type === 'credit_card' ? '💳' : '🏦'}</span>
+                          <span className="account-list-icon"><AccountIcon type={account.type} size={18} /></span>
                           <span className="text-ios-body text-black dark:text-white truncate">
                             {account.name}
                           </span>
@@ -1217,4 +1217,3 @@ export default function AddExpensePage() {
     </div>
   );
 }
-

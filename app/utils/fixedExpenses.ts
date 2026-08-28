@@ -1,11 +1,10 @@
 // Utility functions for processing fixed monthly expenses
 
-import { createClient } from '@supabase/supabase-js';
-import { supabaseUrl, supabaseAnonKey } from '../lib/supabase';
+import { createConvexDatabase } from '../lib/convexDb';
 
 function getSupabaseClient() {
   if (typeof window === 'undefined') return null;
-  return createClient(supabaseUrl, supabaseAnonKey);
+  return process.env.NEXT_PUBLIC_CONVEX_URL ? createConvexDatabase() : null;
 }
 
 function getUsername(): string | null {
@@ -165,4 +164,3 @@ export function checkAndProcessFixedExpenses(): void {
     localStorage.setItem(lastCheckKey, today);
   });
 }
-
