@@ -23,7 +23,7 @@ const steps = [
   {
     number: '04',
     title: 'Send the message text',
-    body: 'In Get Contents of URL, set Method to POST. Set Request Body to Text, then insert the Message variable as the body.',
+    body: 'In Get Contents of URL, set Method to POST. Under Request Body choose JSON, add a text field named text, then set its value to the Message variable.',
   },
   {
     number: '05',
@@ -42,7 +42,7 @@ export default function IPhoneShortcutGuidePage() {
 
   return (
     <div className="iphone-guide-screen flex flex-col h-screen bg-white dark:bg-black">
-      <main className="flex-1 overflow-y-auto pb-safe-bottom">
+      <main className="flex-1 overflow-y-auto">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 pt-4 pb-32 sm:pb-36">
           <button type="button" onClick={goToSetup} className="iphone-guide__back mb-5">
             <span aria-hidden="true">←</span> Auto-Tracking

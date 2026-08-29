@@ -6,7 +6,7 @@ import { parseTransactionSms, inferCategory, shouldAutoAdd, type ParsedTransacti
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-interface IngestBody { token?: string; sender?: string | null; text?: string; parsed?: Partial<ParsedTransaction> }
+interface IngestBody { token?: string; sender?: string | null; text?: string; message?: string; parsed?: Partial<ParsedTransaction> }
 const hashToken = (raw: string) => createHash('sha256').update(raw, 'utf8').digest('hex');
 
 function validateParsed(value: Partial<ParsedTransaction>): ParsedTransaction | null {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   const contentType = request.headers.get('content-type') || '';
   let body: IngestBody = {};
   if (rawBody.trim()) {
-    if (contentType.includes('application/json')) {
+    if (contentType.includes('application/json') || rawBody.trimStart().startsWith('{')) {
       try { body = JSON.parse(rawBody); } catch { body = { text: rawBody }; }
     } else if (contentType.includes('application/x-www-form-urlencoded')) {
       const params = new URLSearchParams(rawBody);
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
     } else body = { text: rawBody };
   }
   const bearer = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  body.text ||= body.message;
   const rawToken = (body.token || request.nextUrl.searchParams.get('token') || bearer || '').trim();
   if (!rawToken) return NextResponse.json({ error: 'Missing token' }, { status: 401 });
   body.sender ||= request.nextUrl.searchParams.get('sender');
