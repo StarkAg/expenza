@@ -1,7 +1,7 @@
 // Service Worker for Expenza Expense Tracker
-const CACHE_NAME = 'expenza-v9';
-const STATIC_CACHE_NAME = 'expenza-static-v9';
-const DATA_CACHE_NAME = 'expenza-data-v9';
+const CACHE_NAME = 'expenza-v10';
+const STATIC_CACHE_NAME = 'expenza-static-v10';
+const DATA_CACHE_NAME = 'expenza-data-v10';
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {

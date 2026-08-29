@@ -60,6 +60,10 @@ export default defineSchema({
     platform: v.union(v.literal("ios"), v.literal("android"), v.literal("other")),
     token_hash: v.string(),
     token_hint: v.string(),
+    // A single account-level connection is intentionally reusable across
+    // iPhone Shortcuts, a Mac, and any future sender integration.
+    connection_scope: v.optional(v.literal("account")),
+    connection_token: v.optional(v.string()),
     last_used_at: v.optional(v.string()),
     revoked_at: v.optional(v.string()),
   })

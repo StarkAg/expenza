@@ -16,6 +16,13 @@ interface DeviceToken {
   revoked_at: string | null;
 }
 
+type CopyTarget = 'shortcut';
+
+// Shortcuts run on the iPhone, not on the computer that created the device.
+// This must remain a public production origin even while the web UI is being
+// tested through localhost.
+const PUBLIC_APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'https://expenza-expense-tracker-6kjh69gl2-starkags-projects.vercel.app';
+
 export default function AutoTrackerSettingsPage() {
   const router = useRouter();
   const { username, loading: authLoading } = useSupabase();
@@ -24,13 +31,11 @@ export default function AutoTrackerSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [label, setLabel] = useState('');
-  const [platform, setPlatform] = useState<'ios' | 'android'>('ios');
   const [creating, setCreating] = useState(false);
 
-  // Shown exactly once, right after creation -- the server only keeps a hash.
-  const [freshToken, setFreshToken] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  // One reusable link belongs to the account, not to a particular phone.
+  const [connectionToken, setConnectionToken] = useState<string | null>(null);
+  const [copied, setCopied] = useState<CopyTarget | null>(null);
 
   const load = useCallback(async () => {
     if (!username) return;
@@ -38,7 +43,9 @@ export default function AutoTrackerSettingsPage() {
       setLoading(true);
       const res = await fetch(`/api/tokens?username=${encodeURIComponent(username)}`);
       if (!res.ok) throw new Error((await res.json()).error || 'Failed to load');
-      setTokens((await res.json()).tokens || []);
+      const data = await res.json();
+      setTokens(data.tokens || []);
+      setConnectionToken(data.connectionToken || null);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -57,7 +64,7 @@ export default function AutoTrackerSettingsPage() {
 
   const createToken = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !label.trim()) return;
+    if (!username) return;
     hapticFeedback('medium');
     setCreating(true);
     setError(null);
@@ -65,13 +72,12 @@ export default function AutoTrackerSettingsPage() {
       const res = await fetch('/api/tokens', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, label: label.trim(), platform }),
+        body: JSON.stringify({ username }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not create');
-      setFreshToken(data.token);
-      setLabel('');
-      setCopied(false);
+      setConnectionToken(data.token);
+      setCopied(null);
       load();
       hapticFeedback('light');
     } catch (e: any) {
@@ -84,7 +90,7 @@ export default function AutoTrackerSettingsPage() {
 
   const revoke = async (id: string) => {
     if (!username) return;
-    if (!confirm('Revoke this device? It will stop sending transactions immediately.')) return;
+    if (!confirm('Revoke this Auto-Tracking link? It will stop sending transactions immediately.')) return;
     hapticFeedback('medium');
     try {
       const res = await fetch(`/api/tokens?username=${encodeURIComponent(username)}&id=${id}`, {
@@ -97,11 +103,24 @@ export default function AutoTrackerSettingsPage() {
     }
   };
 
-  const copyToken = async () => {
-    if (!freshToken) return;
+  const copyText = async (text: string, target: CopyTarget) => {
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(freshToken);
-      setCopied(true);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const fallback = document.createElement('textarea');
+        fallback.value = text;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.appendChild(fallback);
+        fallback.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(fallback);
+        if (!copied) throw new Error('Copy command was rejected');
+      }
+      setCopied(target);
       hapticFeedback('light');
     } catch {
       setError('Could not copy. Select the text and copy it manually.');
@@ -110,15 +129,30 @@ export default function AutoTrackerSettingsPage() {
 
   const active = tokens.filter((t) => !t.revoked_at);
   const revoked = tokens.filter((t) => t.revoked_at);
+  const shortcutUrl = connectionToken
+    ? `${PUBLIC_APP_ORIGIN}/api/ingest?token=${encodeURIComponent(connectionToken)}`
+    : '';
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-black">
+    <div className="auto-tracker-screen flex flex-col h-screen bg-white dark:bg-black">
       <main className="flex-1 overflow-y-auto pb-safe-bottom">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 pt-4 pb-32 sm:pb-36">
           <h1 className="text-ios-title-2 text-black dark:text-white mb-1">Auto-Tracking</h1>
           <p className="text-ios-caption-1 text-black/50 dark:text-white/50 mb-5">
             Pair a phone so bank SMS become expenses automatically.
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              hapticFeedback('light');
+              router.push('/settings/auto-tracker/iphone-guide');
+            }}
+            className="auto-tracker-guide-link w-full mb-5 px-3 py-3 rounded-ios text-left"
+          >
+            <span className="auto-tracker-guide-link__eyebrow">New to Shortcuts?</span>
+            <span className="auto-tracker-guide-link__title">Set up iPhone Auto-Tracking</span>
+            <span className="auto-tracker-guide-link__arrow" aria-hidden="true">→</span>
+          </button>
 
           {error && (
             <div className="mb-4 p-3 rounded-ios border border-red-600/20 dark:border-red-400/20 bg-red-600/5">
@@ -126,80 +160,48 @@ export default function AutoTrackerSettingsPage() {
             </div>
           )}
 
-          {freshToken && (
-            <div className="mb-5 p-3 rounded-ios border-2 border-black dark:border-white">
+          {connectionToken && (
+            <section className="auto-tracker-setup mb-5 p-4 rounded-ios-lg">
               <p className="text-ios-caption-1 font-semibold text-black dark:text-white mb-1">
-                Copy this now — it is shown only once
+                Your Auto-Tracking link
               </p>
               <p className="text-ios-caption-1 text-black/50 dark:text-white/50 mb-2">
-                Only a hash is stored, so it cannot be shown again. Lost it? Revoke and make a new one.
+                This is your one link for the account. Use the same URL on iPhone, Mac, or any supported sender.
               </p>
-              <code className="block break-all p-2 mb-2 rounded bg-black/5 dark:bg-white/10 text-[11px] text-black dark:text-white">
-                {freshToken}
+
+              <span className="auto-tracker-setup__label">Shortcut URL</span>
+              <code tabIndex={0} className="auto-tracker-setup__code block break-all p-3 mb-2 rounded text-[11px]">
+                {shortcutUrl || 'Preparing your shortcut URL…'}
               </code>
-              <div className="flex gap-2">
-                <button
-                  onClick={copyToken}
-                  className="flex-1 py-2 text-ios-caption-1 bg-black dark:bg-white text-white dark:text-black rounded-ios active:opacity-80"
-                >
-                  {copied ? 'Copied' : 'Copy token'}
-                </button>
-                <button
-                  onClick={() => setFreshToken(null)}
-                  className="px-3 py-2 text-ios-caption-1 text-black/60 dark:text-white/60 border border-black/20 dark:border-white/20 rounded-ios active:opacity-80"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
+              <button
+                type="button"
+                disabled={!shortcutUrl}
+                onClick={() => copyText(shortcutUrl, 'shortcut')}
+                className="auto-tracker-setup__primary w-full py-2.5 text-ios-caption-1 rounded-ios active:opacity-80"
+              >
+                {copied === 'shortcut' ? 'Shortcut URL copied' : 'Copy shortcut URL'}
+              </button>
+
+            </section>
           )}
 
-          <form onSubmit={createToken} className="mb-6 space-y-3">
-            <div>
-              <label className="block text-ios-body font-semibold text-black dark:text-white mb-2">
-                Add a device
-              </label>
-              <input
-                type="text"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="e.g., My iPhone"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-black text-ios-body text-black dark:text-white rounded-ios border border-black/20 dark:border-white/20 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                disabled={creating}
-              />
-            </div>
-            <div className="flex gap-2">
-              {(['ios', 'android'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPlatform(p)}
-                  className={`flex-1 py-2 text-ios-caption-1 rounded-ios border transition-colors ${
-                    platform === p
-                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                      : 'bg-white dark:bg-black text-black/60 dark:text-white/60 border-black/20 dark:border-white/20'
-                  }`}
-                >
-                  {p === 'ios' ? 'iPhone (Shortcut)' : 'Android (app)'}
-                </button>
-              ))}
-            </div>
+          <form onSubmit={createToken} className="mb-6">
             <button
               type="submit"
-              disabled={creating || !label.trim()}
+              disabled={creating}
               className="w-full py-3 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 active:opacity-80"
             >
-              {creating ? 'Creating…' : 'Create token'}
+              {creating ? 'Preparing…' : connectionToken ? 'Show my Auto-Tracking link' : 'Create Auto-Tracking link'}
             </button>
           </form>
 
-          <h2 className="text-ios-body font-semibold text-black dark:text-white mb-2">Paired devices</h2>
+          <h2 className="text-ios-body font-semibold text-black dark:text-white mb-2">Account connection</h2>
 
           {loading && <div className="h-16 rounded-ios bg-black/5 dark:bg-white/5 animate-pulse" />}
 
           {!loading && active.length === 0 && (
             <p className="text-ios-caption-1 text-black/40 dark:text-white/40 py-4">
-              No devices paired yet.
+              No Auto-Tracking link created yet.
             </p>
           )}
 
@@ -213,7 +215,7 @@ export default function AutoTrackerSettingsPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-ios-body text-black dark:text-white truncate">{t.label}</span>
                     <span className="px-1.5 py-0.5 text-[10px] rounded bg-black/10 dark:bg-white/10 text-black/60 dark:text-white/60">
-                      {t.platform === 'ios' ? 'iPhone' : t.platform === 'android' ? 'Android' : 'Other'}
+                      Account-wide
                     </span>
                   </div>
                   <p className="text-ios-caption-1 text-black/50 dark:text-white/50 mt-0.5">
@@ -227,7 +229,7 @@ export default function AutoTrackerSettingsPage() {
                   onClick={() => revoke(t.id)}
                   className="px-3 py-1.5 text-ios-caption-1 text-red-600 dark:text-red-400 border border-red-600/20 dark:border-red-400/20 rounded-ios active:opacity-80 shrink-0 ml-2"
                 >
-                  Revoke
+                  Revoke link
                 </button>
               </div>
             ))}
@@ -241,8 +243,7 @@ export default function AutoTrackerSettingsPage() {
 
           <div className="mt-8 p-3 rounded-ios bg-black/5 dark:bg-white/5">
             <p className="text-ios-caption-1 text-black/60 dark:text-white/60">
-              Setup steps for the iPhone Shortcut and the Android app are in{' '}
-              <span className="font-semibold">AUTO_TRACKER.md</span> in the project root.
+              Create a device connection to get a full, copyable endpoint and the setup steps here. You never need to open a project file from your phone.
             </p>
           </div>
         </div>

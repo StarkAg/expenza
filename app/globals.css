@@ -24,13 +24,12 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  /* Disable Safari bounce and zoom */
+  /* Keep native text selection and iOS long-press callouts available. */
   overscroll-behavior: none;
   overscroll-behavior-y: none;
-  touch-action: manipulation;
-  /* Prevent text selection on iOS */
-  -webkit-user-select: none;
-  user-select: none;
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
   -webkit-tap-highlight-color: transparent;
   /* Smooth scrolling - momentum on iOS */
   -webkit-overflow-scrolling: touch;
@@ -477,10 +476,18 @@ main > div[class*='max-w-'] {
 }
 
 nav.app-tab-bar {
-  min-height: calc(4.5rem + env(safe-area-inset-bottom));
+  /* One bar height plus one iPhone home-indicator inset. The old min-height
+     and utility padding compounded these values, leaving a visible void. */
+  height: calc(4.5rem + env(safe-area-inset-bottom));
+  min-height: 0 !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
   border-top: 1px solid var(--expenza-line) !important;
   background: rgb(10 10 10 / 0.9) !important;
   box-shadow: 0 -12px 30px rgb(0 0 0 / 0.34);
+}
+
+nav.app-tab-bar > div {
+  height: 4.5rem !important;
 }
 
 .dark nav.app-tab-bar {
@@ -859,4 +866,182 @@ body button[class~='dark:bg-white']:disabled {
 .quick-entry__textarea::placeholder {
   color: rgb(245 245 242 / 0.48) !important;
   opacity: 1;
+}
+
+/* The floating Add tab uses an SVG with currentColor. Its active dark-mode
+   utility previously won the cascade and painted the glyph white on ivory. */
+body .app-tab-bar__add,
+body .app-tab-bar__add svg {
+  color: #080808 !important;
+  stroke: currentColor;
+}
+
+/* Never allow legacy paired Tailwind utilities to choose opposing foreground
+   and background colors. These controls exist across forms, tabs, and modals. */
+html body button[class~='bg-black'][class~='dark:bg-white'] {
+  border-color: transparent !important;
+  background: #f5f5f2 !important;
+  color: #080808 !important;
+}
+
+html body button[class~='bg-white'][class~='dark:bg-black'] {
+  border-color: var(--expenza-line) !important;
+  background: var(--expenza-surface-raised) !important;
+  color: var(--expenza-ink) !important;
+}
+
+html body button:disabled {
+  opacity: 1 !important;
+}
+
+/* Auto-tracking is a setup screen, so its copyable values need stronger
+   separation than a general form field. Keeping every foreground explicit
+   prevents utility-class ordering from creating black-on-black text. */
+.auto-tracker-screen .auto-tracker-setup {
+  border: 1px solid rgb(214 146 60 / 0.5);
+  background: linear-gradient(145deg, rgb(214 146 60 / 0.1), rgb(16 16 16 / 0.96) 40%);
+  box-shadow: 0 18px 36px rgb(0 0 0 / 0.24);
+}
+
+.auto-tracker-screen .auto-tracker-setup__label {
+  display: block;
+  margin: 0.9rem 0 0.4rem;
+  color: rgb(245 245 242 / 0.82) !important;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.auto-tracker-screen .auto-tracker-setup__code {
+  border: 1px solid var(--expenza-line);
+  background: #080808 !important;
+  color: #f5f5f2 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.5;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default;
+}
+
+.auto-tracker-screen .auto-tracker-setup p,
+.auto-tracker-screen .auto-tracker-setup span,
+.auto-tracker-screen .auto-tracker-setup li,
+.auto-tracker-screen .auto-tracker-setup strong {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+.auto-tracker-screen .auto-tracker-setup__primary {
+  border: 1px solid transparent !important;
+  background: #f5f5f2 !important;
+  color: #080808 !important;
+  font-weight: 700;
+}
+
+.auto-tracker-screen .auto-tracker-setup__primary:disabled {
+  border-color: var(--expenza-line) !important;
+  background: rgb(245 245 242 / 0.14) !important;
+  color: rgb(245 245 242 / 0.58) !important;
+}
+
+.auto-tracker-screen .auto-tracker-guide-link {
+  position: relative;
+  border: 1px solid rgb(214 146 60 / 0.4);
+  background: linear-gradient(110deg, rgb(214 146 60 / 0.14), rgb(16 16 16 / 0.94));
+  color: #f5f5f2 !important;
+}
+
+.auto-tracker-guide-link__eyebrow,
+.iphone-guide__eyebrow {
+  display: block;
+  color: #d6923c !important;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.auto-tracker-guide-link__title {
+  display: block;
+  margin-top: 0.2rem;
+  color: #f5f5f2 !important;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.auto-tracker-guide-link__arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  color: #d6923c !important;
+  font-size: 1.35rem;
+  transform: translateY(-50%);
+}
+
+.iphone-guide-screen .iphone-guide__back {
+  color: rgb(245 245 242 / 0.76) !important;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.iphone-guide-screen .iphone-guide__back span {
+  color: #d6923c !important;
+  margin-right: 0.25rem;
+}
+
+.iphone-guide-screen .iphone-guide__eyebrow {
+  margin-bottom: 0.5rem;
+}
+
+.iphone-guide-screen .iphone-guide__notice,
+.iphone-guide-screen .iphone-guide__tip {
+  border: 1px solid var(--expenza-line);
+  background: #121212 !important;
+}
+
+.iphone-guide-screen .iphone-guide__notice {
+  border-color: rgb(214 146 60 / 0.42);
+  background: linear-gradient(135deg, rgb(214 146 60 / 0.11), #121212 55%) !important;
+}
+
+.iphone-guide-screen .iphone-guide__notice-title,
+.iphone-guide-screen .iphone-guide__tip-title {
+  color: #f5f5f2 !important;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.iphone-guide-screen .iphone-guide__notice-copy {
+  margin-top: 0.3rem;
+  color: rgb(245 245 242 / 0.7) !important;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.iphone-guide-screen .iphone-guide__step {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 0.7rem;
+  border: 1px solid var(--expenza-line);
+  background: #101010 !important;
+}
+
+.iphone-guide-screen .iphone-guide__number {
+  color: #d6923c !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.iphone-guide-screen .iphone-guide__tip-title {
+  margin-bottom: 0.3rem;
+}
+
+.iphone-guide-screen .iphone-guide__cta {
+  border: 1px solid transparent !important;
+  background: #f5f5f2 !important;
+  color: #080808 !important;
+  font-weight: 700;
 }

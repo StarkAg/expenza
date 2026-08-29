@@ -13,6 +13,7 @@ const pageTitles: Record<string, string> = {
   '/fixed-expenses': 'Bills',
   '/printer': 'Printer',
   '/settings/auto-tracker': 'Auto-tracker',
+  '/settings/auto-tracker/iphone-guide': 'iPhone Shortcut guide',
 };
 
 export default function MobileAppHeader() {

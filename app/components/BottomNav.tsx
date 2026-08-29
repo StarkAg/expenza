@@ -39,7 +39,7 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="app-tab-bar fixed bottom-0 left-0 right-0 bg-white dark:bg-black backdrop-blur-xl border-t border-black/10 dark:border-white/10 pb-safe-bottom z-50" aria-label="Primary navigation">
+    <nav className="app-tab-bar fixed bottom-0 left-0 right-0 bg-white dark:bg-black backdrop-blur-xl border-t border-black/10 dark:border-white/10 z-50" aria-label="Primary navigation">
       <div className="w-full max-w-md lg:max-w-2xl mx-auto flex justify-around items-center h-14 sm:h-16 px-2 sm:px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (pathname === '/' && item.href === '/stats');
