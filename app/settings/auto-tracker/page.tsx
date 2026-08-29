@@ -18,6 +18,16 @@ interface DeviceToken {
 
 type CopyTarget = 'shortcut';
 
+type TrackingPlatform = 'ios' | 'android';
+
+declare global {
+  interface Window {
+    AndroidAutoTracker?: {
+      requestSmsPermission: () => Promise<'granted' | 'denied'> | 'granted' | 'denied';
+    };
+  }
+}
+
 // Shortcuts run on the iPhone, not on the computer that created the device.
 // This must remain a public production origin even while the web UI is being
 // tested through localhost.
@@ -32,6 +42,8 @@ export default function AutoTrackerSettingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [creating, setCreating] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<TrackingPlatform>('ios');
+  const [androidPermission, setAndroidPermission] = useState<'idle' | 'granted' | 'denied' | 'unavailable'>('idle');
 
   // One reusable link belongs to the account, not to a particular phone.
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
@@ -127,6 +139,25 @@ export default function AutoTrackerSettingsPage() {
     }
   };
 
+  const choosePlatform = async (platform: TrackingPlatform) => {
+    hapticFeedback('light');
+    setSelectedPlatform(platform);
+    if (platform !== 'android' || androidPermission !== 'idle') return;
+
+    const bridge = window.AndroidAutoTracker;
+    if (!bridge?.requestSmsPermission) {
+      setAndroidPermission('unavailable');
+      return;
+    }
+
+    try {
+      const result = await bridge.requestSmsPermission();
+      setAndroidPermission(result === 'granted' ? 'granted' : 'denied');
+    } catch {
+      setAndroidPermission('denied');
+    }
+  };
+
   const active = tokens.filter((t) => !t.revoked_at);
   const shortcutUrl = connectionToken
     ? `${PUBLIC_APP_ORIGIN}/api/ingest?token=${encodeURIComponent(connectionToken)}`
@@ -140,18 +171,55 @@ export default function AutoTrackerSettingsPage() {
           <p className="text-ios-caption-1 text-black/50 dark:text-white/50 mb-5">
             Pair a phone so bank SMS become expenses automatically.
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              hapticFeedback('light');
-              router.push('/settings/auto-tracker/iphone-guide');
-            }}
-            className="auto-tracker-guide-link w-full mb-5 px-3 py-3 rounded-ios text-left"
-          >
-            <span className="auto-tracker-guide-link__eyebrow">New to Shortcuts?</span>
-            <span className="auto-tracker-guide-link__title">Set up iPhone Auto-Tracking</span>
-            <span className="auto-tracker-guide-link__arrow" aria-hidden="true">→</span>
-          </button>
+          <div className="auto-tracker-platforms mb-5" role="group" aria-label="Choose a device type">
+            <button
+              type="button"
+              onClick={() => choosePlatform('ios')}
+              className={`auto-tracker-platforms__option ${selectedPlatform === 'ios' ? 'is-selected' : ''}`}
+              aria-pressed={selectedPlatform === 'ios'}
+            >
+              iPhone Shortcut
+            </button>
+            <button
+              type="button"
+              onClick={() => choosePlatform('android')}
+              className={`auto-tracker-platforms__option ${selectedPlatform === 'android' ? 'is-selected' : ''}`}
+              aria-pressed={selectedPlatform === 'android'}
+            >
+              Android
+            </button>
+          </div>
+
+          {selectedPlatform === 'ios' ? (
+            <button
+              type="button"
+              onClick={() => {
+                hapticFeedback('light');
+                router.push('/settings/auto-tracker/iphone-guide');
+              }}
+              className="auto-tracker-guide-link w-full mb-5 px-3 py-3 rounded-ios text-left"
+            >
+              <span className="auto-tracker-guide-link__eyebrow">NEW TO SHORTCUTS?</span>
+              <span className="auto-tracker-guide-link__title">Set up iPhone Auto-Tracking</span>
+              <span className="auto-tracker-guide-link__arrow" aria-hidden="true">→</span>
+            </button>
+          ) : (
+            <section className="auto-tracker-android mb-5 p-4 rounded-ios-lg">
+              <p className="text-ios-body font-semibold text-black dark:text-white mb-1">Android SMS access</p>
+              {androidPermission === 'granted' && (
+                <p className="text-ios-caption-1">SMS permission granted. Your Android app can now send detected expenses to this account.</p>
+              )}
+              {androidPermission === 'denied' && (
+                <p className="text-ios-caption-1">SMS permission was not granted. You can enable it later in Android Settings.</p>
+              )}
+              {androidPermission === 'unavailable' && (
+                <p className="text-ios-caption-1">Install and open Expenza’s Android app to grant SMS permission. Browsers and PWAs cannot request SMS access.</p>
+              )}
+              {androidPermission === 'idle' && (
+                <p className="text-ios-caption-1">Requesting SMS permission from the Expenza Android app…</p>
+              )}
+            </section>
+          )}
 
           {error && (
             <div className="mb-4 p-3 rounded-ios border border-red-600/20 dark:border-red-400/20 bg-red-600/5">
