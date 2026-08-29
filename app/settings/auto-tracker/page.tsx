@@ -241,11 +241,6 @@ export default function AutoTrackerSettingsPage() {
             </p>
           )}
 
-          <div className="mt-8 p-3 rounded-ios bg-black/5 dark:bg-white/5">
-            <p className="text-ios-caption-1 text-black/60 dark:text-white/60">
-              Create a device connection to get a full, copyable endpoint and the setup steps here. You never need to open a project file from your phone.
-            </p>
-          </div>
         </div>
       </main>
       <BottomNav />
