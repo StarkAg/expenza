@@ -128,7 +128,6 @@ export default function AutoTrackerSettingsPage() {
   };
 
   const active = tokens.filter((t) => !t.revoked_at);
-  const revoked = tokens.filter((t) => t.revoked_at);
   const shortcutUrl = connectionToken
     ? `${PUBLIC_APP_ORIGIN}/api/ingest?token=${encodeURIComponent(connectionToken)}`
     : '';
@@ -234,12 +233,6 @@ export default function AutoTrackerSettingsPage() {
               </div>
             ))}
           </div>
-
-          {revoked.length > 0 && (
-            <p className="text-ios-caption-1 text-black/30 dark:text-white/30 mt-4">
-              {revoked.length} revoked device{revoked.length > 1 ? 's' : ''} hidden
-            </p>
-          )}
 
         </div>
       </main>
