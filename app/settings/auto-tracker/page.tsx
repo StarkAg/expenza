@@ -21,7 +21,7 @@ type CopyTarget = 'shortcut';
 // Shortcuts run on the iPhone, not on the computer that created the device.
 // This must remain a public production origin even while the web UI is being
 // tested through localhost.
-const PUBLIC_APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'https://expenza-expense-tracker-6kjh69gl2-starkags-projects.vercel.app';
+const PUBLIC_APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'https://expenza-expense-tracker-lac.vercel.app';
 
 export default function AutoTrackerSettingsPage() {
   const router = useRouter();
@@ -184,15 +184,17 @@ export default function AutoTrackerSettingsPage() {
             </section>
           )}
 
-          <form onSubmit={createToken} className="mb-6">
-            <button
-              type="submit"
-              disabled={creating}
-              className="w-full py-3 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 active:opacity-80"
-            >
-              {creating ? 'Preparing…' : connectionToken ? 'Show my Auto-Tracking link' : 'Create Auto-Tracking link'}
-            </button>
-          </form>
+          {!connectionToken && (
+            <form onSubmit={createToken} className="mb-6">
+              <button
+                type="submit"
+                disabled={creating}
+                className="w-full py-3 bg-black dark:bg-white text-white dark:text-black text-ios-headline font-semibold rounded-ios-lg disabled:opacity-50 active:opacity-80"
+              >
+                {creating ? 'Preparing…' : 'Create Auto-Tracking link'}
+              </button>
+            </form>
+          )}
 
           <h2 className="text-ios-body font-semibold text-black dark:text-white mb-2">Account connection</h2>
 
