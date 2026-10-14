@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '../../providers';
 import BottomNav from '../../components/BottomNav';
 import { hapticFeedback } from '../../utils/haptics';
+import { readApiResponse, objectOf } from '../../lib/http';
 
 interface DeviceToken {
   id: string;
@@ -54,10 +55,11 @@ export default function AutoTrackerSettingsPage() {
     try {
       setLoading(true);
       const res = await fetch(`/api/tokens?username=${encodeURIComponent(username)}`);
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed to load');
-      const data = await res.json();
-      setTokens(data.tokens || []);
-      setConnectionToken(data.connectionToken || null);
+      const result = await readApiResponse(res);
+      if (!result.ok) throw new Error(result.error || 'Failed to load');
+      const data = objectOf(result);
+      setTokens(Array.isArray(data.tokens) ? data.tokens : []);
+      setConnectionToken(typeof data.connectionToken === 'string' ? data.connectionToken : null);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -86,8 +88,12 @@ export default function AutoTrackerSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not create');
+      const result = await readApiResponse(res);
+      if (!result.ok) throw new Error(result.error || 'Could not create');
+      const data = objectOf(result);
+      if (typeof data.token !== 'string' || !data.token) {
+        throw new Error('The server did not return a usable link. Try again.');
+      }
       setConnectionToken(data.token);
       setCopied(null);
       load();
@@ -108,7 +114,8 @@ export default function AutoTrackerSettingsPage() {
       const res = await fetch(`/api/tokens?username=${encodeURIComponent(username)}&id=${id}`, {
         method: 'DELETE',
       });
-      if (!res.ok) throw new Error((await res.json()).error || 'Could not revoke');
+      const result = await readApiResponse(res);
+      if (!result.ok) throw new Error(result.error || 'Could not revoke');
       load();
     } catch (e: any) {
       setError(e.message);
@@ -165,7 +172,7 @@ export default function AutoTrackerSettingsPage() {
 
   return (
     <div className="auto-tracker-screen flex flex-col h-screen bg-white dark:bg-black">
-      <main className="flex-1 overflow-y-auto pb-safe-bottom">
+      <main className="flex-1 overflow-y-auto">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 pt-4 pb-32 sm:pb-36">
           <h1 className="text-ios-title-2 text-black dark:text-white mb-1">Auto-Tracking</h1>
           <p className="text-ios-caption-1 text-black/50 dark:text-white/50 mb-5">

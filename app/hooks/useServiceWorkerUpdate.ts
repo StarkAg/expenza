@@ -2,99 +2,94 @@
 
 import { useEffect } from 'react';
 
+/** One reload per page lifetime, no matter how the events interleave. */
+let reloading = false;
+
+const UPDATE_CHECK_MS = 30 * 60 * 1000;
+
+/**
+ * Activates a new service worker and reloads once so the fresh build takes
+ * over.
+ *
+ * The guards matter more than the happy path here. The previous version
+ * reloaded on every `controllerchange`, including the one `clients.claim()`
+ * fires on a first-ever install when there was no controller to replace --
+ * a guaranteed reload on first launch, and a reload loop whenever the worker
+ * re-activated. Now a reload happens only when a worker that was actually
+ * controlling this page is replaced by a newer one.
+ */
 export function useServiceWorkerUpdate() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
       return;
     }
 
+    // Captured before anything can change it. If the page loaded without a
+    // controller, the first controllerchange is this app's initial install
+    // and there is nothing to reload for.
+    const hadControllerAtLoad = Boolean(navigator.serviceWorker.controller);
+
     let registration: ServiceWorkerRegistration | undefined;
-    let updateCheckInterval: NodeJS.Timeout | null = null;
+    let interval: ReturnType<typeof setInterval> | undefined;
+    let cancelled = false;
 
-    // Check for updates
-    const checkForUpdates = async () => {
-      try {
-        if (registration) {
-          await registration.update();
-        } else {
-          const reg = await navigator.serviceWorker.getRegistration();
-          if (reg) {
-            registration = reg;
-            await registration.update();
-          }
+    const promote = (worker: ServiceWorker | null) => {
+      if (!worker || !hadControllerAtLoad) return;
+      if (worker.state === 'installed') {
+        worker.postMessage({ type: 'SKIP_WAITING' });
+        return;
+      }
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'installed') {
+          worker.postMessage({ type: 'SKIP_WAITING' });
         }
-      } catch (error) {
-        console.error('Error checking for service worker updates:', error);
-      }
+      });
     };
 
-    // Handle service worker update found
     const handleUpdateFound = () => {
-      const installingWorker = registration?.installing || registration?.waiting;
-      
-      if (installingWorker && navigator.serviceWorker.controller) {
-        installingWorker.addEventListener('statechange', () => {
-          if (installingWorker.state === 'installed') {
-            // New service worker is waiting - tell it to skip waiting and activate
-            installingWorker.postMessage({ type: 'SKIP_WAITING' });
-          }
-        });
-      }
+      promote(registration?.installing ?? registration?.waiting ?? null);
     };
 
-    // Initialize service worker update checking
-    const initServiceWorkerUpdate = async () => {
-      try {
-        // Wait for service worker to be ready
-        registration = await navigator.serviceWorker.ready;
-        
-        // Listen for updates
-        registration.addEventListener('updatefound', handleUpdateFound);
-        
-        // Check for updates immediately
-        checkForUpdates();
-        
-        // Check for updates periodically (every 60 seconds)
-        updateCheckInterval = setInterval(checkForUpdates, 60000);
-        
-        // Also check when the page becomes visible (user returns to the app)
-        const handleVisibilityChange = () => {
-          if (!document.hidden) {
-            checkForUpdates();
-          }
-        };
-        
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        
-        // Cleanup function
-        return () => {
-          if (updateCheckInterval) {
-            clearInterval(updateCheckInterval);
-          }
-          document.removeEventListener('visibilitychange', handleVisibilityChange);
-          registration?.removeEventListener('updatefound', handleUpdateFound);
-        };
-      } catch (error) {
-        console.error('Error initializing service worker update:', error);
-      }
-    };
-
-    // Listen for controller changes (when a new service worker takes control)
     const handleControllerChange = () => {
-      // Reload the page when a new service worker takes control
+      if (reloading || !hadControllerAtLoad) return;
+      reloading = true;
       window.location.reload();
+    };
+
+    const checkForUpdates = () => {
+      registration?.update().catch(() => {
+        /* offline or throttled by the browser; the next tick retries */
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) checkForUpdates();
     };
 
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
-    // Initialize
-    initServiceWorkerUpdate();
+    navigator.serviceWorker.ready
+      .then((reg) => {
+        if (cancelled) return;
+        registration = reg;
 
-    // Cleanup on unmount
+        // A worker may already be waiting from a previous session.
+        promote(reg.waiting);
+
+        reg.addEventListener('updatefound', handleUpdateFound);
+        checkForUpdates();
+        interval = setInterval(checkForUpdates, UPDATE_CHECK_MS);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+      })
+      .catch(() => {
+        /* no service worker available; the app works without one */
+      });
+
     return () => {
-      if (updateCheckInterval) {
-        clearInterval(updateCheckInterval);
-      }
+      cancelled = true;
+      if (interval) clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      registration?.removeEventListener('updatefound', handleUpdateFound);
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
     };
   }, []);

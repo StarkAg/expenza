@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insertRow, listRows, removeRow, updateRow } from '../../lib/convexServer';
+import { merchantKey } from '../../lib/merchants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,16 +53,46 @@ export async function POST(request: NextRequest) {
     const amount = Number(row.amount);
     const expense = await insertRow('expenses', {
       username, amount, category,
-      note: row.direction === 'credit' ? `Refund: ${row.merchant || 'SMS credit'}` : row.merchant || 'SMS transaction',
+      // Carried onto the row so spending totals can exclude money coming in.
+      direction: row.direction === 'credit' ? 'credit' : 'debit',
+      note: row.direction === 'credit' ? `Received: ${row.merchant || 'SMS credit'}` : row.merchant || 'SMS transaction',
       date: row.occurred_on, account_id: accountId, source: 'sms_confirmed', sms_ref: row.sms_ref,
     });
     if (!expense) throw new Error('Expense creation failed');
     await adjustBalance(username, accountId, row.direction === 'debit' ? -amount : amount);
     await updateRow('pending_transactions', id, username, { status: 'confirmed', expense_id: expense.id, resolved_at: new Date().toISOString(), matched_account_id: accountId });
+    // Remember this choice so the next message from the same payee is
+    // categorised without asking again.
+    await rememberMerchantCategory(username, row.merchant, category, row.direction);
     return NextResponse.json({ status: 'confirmed', expenseId: expense.id });
   } catch (error) {
     console.error('[pending] mutation failed:', error);
     return NextResponse.json({ error: 'Could not update transaction' }, { status: 500 });
+  }
+}
+
+async function rememberMerchantCategory(
+  username: string,
+  merchant: unknown,
+  category: string,
+  direction: unknown
+) {
+  const key = merchantKey(merchant);
+  if (!key || !category) return;
+  try {
+    const dir = direction === 'credit' ? 'credit' : 'debit';
+    const existing = (await listRows('merchant_categories', username)).find(
+      (row) => row.merchant_key === key && (row.direction || 'debit') === dir
+    );
+    const values = {
+      username, merchant_key: key, category, direction: dir,
+      merchant_label: typeof merchant === 'string' ? merchant.slice(0, 120) : undefined,
+    };
+    if (existing) await updateRow('merchant_categories', existing.id, username, values);
+    else await insertRow('merchant_categories', values);
+  } catch (error) {
+    // Never fail a confirmation because the memory could not be saved.
+    console.error('[pending] could not remember category:', error);
   }
 }
 

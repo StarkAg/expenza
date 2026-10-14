@@ -4,7 +4,8 @@ import { api } from '../../convex/_generated/api';
 export type ConvexTable =
   | 'accounts' | 'expenses' | 'categories' | 'fixed_expenses'
   | 'printer_expenses' | 'printer_cartridges' | 'ingest_tokens'
-  | 'pending_transactions' | 'skipped_messages';
+  | 'pending_transactions' | 'skipped_messages'
+  | 'merchant_categories' | 'loans';
 
 function convex() {
   const url = process.env.NEXT_PUBLIC_CONVEX_URL;

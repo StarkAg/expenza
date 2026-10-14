@@ -12,7 +12,9 @@ type TableName =
   | 'printer_cartridges'
   | 'ingest_tokens'
   | 'pending_transactions'
-  | 'skipped_messages';
+  | 'skipped_messages'
+  | 'merchant_categories'
+  | 'loans';
 
 type Filter = { operator: 'eq' | 'gte' | 'lte' | 'in' | 'like'; field: string; value: unknown };
 type Sort = { field: string; ascending: boolean };

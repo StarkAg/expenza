@@ -17,16 +17,21 @@ const steps = [
   },
   {
     number: '03',
-    title: 'Add the web request',
-    body: 'Add the Get Contents of URL action. Paste the Shortcut URL from Expenza into its URL field.',
+    title: 'Put the message into a Text action',
+    body: 'Add a Text action first. Tap inside it, then insert the Shortcut Input variable so the box holds the message itself. This step is what makes the message available to the next action — without it there is nothing to send.',
   },
   {
     number: '04',
-    title: 'Send the message text',
-    body: 'In Get Contents of URL, set Method to POST. Under Request Body choose JSON, add a text field named text, then set its value to the Message variable.',
+    title: 'Add the web request',
+    body: 'Add Get Contents of URL below the Text action. Paste the Shortcut URL from Expenza into its URL field.',
   },
   {
     number: '05',
+    title: 'Open the arrow and set it to POST',
+    body: 'Tap the small arrow on Get Contents of URL to expand it — these settings are hidden until you do, and the action sends nothing useful while it stays collapsed. Set Method to POST, choose JSON under Request Body, add a field named text, and set its value to the Text variable from step 03.',
+  },
+  {
+    number: '06',
     title: 'Run automatically',
     body: 'Turn off Ask Before Running, confirm Don’t Ask, and save. The next matching bank message will be sent to your Expenza inbox for review.',
   },
@@ -72,6 +77,17 @@ export default function IPhoneShortcutGuidePage() {
               </li>
             ))}
           </ol>
+
+          <section className="iphone-guide__notice mt-6 p-4 rounded-ios-lg" aria-label="Testing the shortcut">
+            <p className="iphone-guide__notice-title">Testing with the play button</p>
+            <p className="iphone-guide__notice-copy">
+              Tapping play runs the Shortcut without a message, so there is no
+              text to send. Expenza replies “Connection works. No message text
+              was received” — that is the correct result, not an error. Only a
+              real bank message carries the text, so wait for one to arrive to
+              see a transaction land in your inbox.
+            </p>
+          </section>
 
           <section className="iphone-guide__tip mt-6 p-4 rounded-ios-lg">
             <p className="iphone-guide__tip-title">Privacy note</p>

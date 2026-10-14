@@ -20,6 +20,9 @@ export default defineSchema({
     account_id: v.optional(v.id("accounts")),
     source: v.optional(v.string()),
     sms_ref: v.optional(v.string()),
+    // Absent means debit. Every row written before income tracking existed is
+    // a debit, so leaving this optional keeps them valid and correctly summed.
+    direction: v.optional(v.union(v.literal("debit"), v.literal("credit"))),
   })
     .index("by_username", ["username"])
     .index("by_username_and_date", ["username", "date"])
@@ -29,6 +32,34 @@ export default defineSchema({
     name: v.string(),
     color: v.string(),
     display_order: v.number(),
+    // Absent means "expense" -- keeps every pre-existing category valid.
+    kind: v.optional(v.union(v.literal("expense"), v.literal("income"))),
+  }).index("by_username", ["username"]),
+
+  // Remembers the category chosen for a payee so the next message from the
+  // same one is categorised without asking again.
+  merchant_categories: defineTable({
+    username,
+    merchant_key: v.string(), // normalised: lowercased, punctuation stripped
+    merchant_label: v.optional(v.string()), // what it looked like when saved
+    category: v.string(),
+    direction: v.optional(v.union(v.literal("debit"), v.literal("credit"))),
+  })
+    .index("by_username", ["username"])
+    .index("by_username_and_merchant_key", ["username", "merchant_key"]),
+
+  // Money the user has borrowed. Interest is never stored: it is simple
+  // interest derived from principal, daily rate, and elapsed days at read
+  // time, so editing the rate or the start date corrects history immediately
+  // and there is no scheduled job to double-post or miss a day.
+  loans: defineTable({
+    username,
+    name: v.string(),
+    principal: v.number(),
+    daily_rate_percent: v.number(), // percent of principal per day
+    started_on: v.string(), // YYYY-MM-DD
+    closed_on: v.optional(v.string()), // accrual stops on this date
+    note: v.optional(v.string()),
   }).index("by_username", ["username"]),
   fixed_expenses: defineTable({
     username,

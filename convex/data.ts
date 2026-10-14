@@ -11,6 +11,8 @@ const table = v.union(
   v.literal("ingest_tokens"),
   v.literal("pending_transactions"),
   v.literal("skipped_messages"),
+  v.literal("merchant_categories"),
+  v.literal("loans"),
 );
 
 type TableName = typeof table.type;
@@ -40,6 +42,10 @@ function normalizeValues(tableName: TableName, input: Record<string, unknown>) {
   if (tableName === "printer_cartridges" && values.cost !== undefined) values.cost = Number(values.cost);
   if (tableName === "categories" && values.display_order !== undefined) values.display_order = Number(values.display_order);
   if (tableName === "fixed_expenses" && values.day_of_month !== undefined) values.day_of_month = Number(values.day_of_month);
+  if (tableName === "loans") {
+    if (values.principal !== undefined) values.principal = Number(values.principal);
+    if (values.daily_rate_percent !== undefined) values.daily_rate_percent = Number(values.daily_rate_percent);
+  }
   return values;
 }
 

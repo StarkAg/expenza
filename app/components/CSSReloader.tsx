@@ -3,88 +3,50 @@
 import { useEffect } from 'react';
 
 /**
- * Component to detect and fix missing CSS issues
- * Checks if CSS is loaded properly and reloads if needed
+ * Last-resort recovery for a page that painted without its stylesheet.
+ *
+ * This existed to paper over the old service worker handing back a stale or
+ * truncated CSS response. That cause is gone -- `/_next/static/**` is now
+ * content-hashed and cache-first, so a hit is always the right bytes -- but
+ * a genuinely failed stylesheet request is still possible on a flaky
+ * connection, so the re-link stays.
+ *
+ * What is deliberately gone is the `window.location.reload()` this used to
+ * fall back to. The heuristic below can false-positive, and a reload
+ * triggered while someone is part-way through entering an expense costs them
+ * their input. Re-linking is idempotent and safe; reloading is not.
  */
 export default function CSSReloader() {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const stylesheetsLoaded = () => {
+      const links = Array.from(
+        document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
+      );
+      if (links.length === 0) return true; // styles are inlined; nothing to check
 
-    // Function to check if CSS is loaded
-    const checkCSS = () => {
-      // Check if any stylesheets are loaded
-      const stylesheets = Array.from(document.styleSheets);
-      let hasValidCSS = false;
-
-      try {
-        // Try to access a stylesheet rule to verify CSS is loaded
-        for (const sheet of stylesheets) {
-          try {
-            if (sheet.cssRules && sheet.cssRules.length > 0) {
-              hasValidCSS = true;
-              break;
-            }
-          } catch (e) {
-            // Cross-origin stylesheet, skip
-            continue;
-          }
-        }
-      } catch (e) {
-        // Error accessing stylesheets
-      }
-
-      // Check if computed styles are working (verify CSS is actually applied)
-      const testElement = document.createElement('div');
-      testElement.style.position = 'absolute';
-      testElement.style.visibility = 'hidden';
-      testElement.className = 'font-sans'; // Should be defined in Tailwind
-      document.body.appendChild(testElement);
-      
-      const computedStyle = window.getComputedStyle(testElement);
-      const fontFamily = computedStyle.fontFamily;
-      document.body.removeChild(testElement);
-
-      // If font-family is not set or is default, CSS might not be loaded
-      if (!fontFamily || fontFamily === 'serif' || fontFamily === '') {
-        hasValidCSS = false;
-      }
-
-      return hasValidCSS;
+      // A <link> that failed leaves no entry in document.styleSheets.
+      const hrefs = new Set(
+        Array.from(document.styleSheets)
+          .map((sheet) => sheet.href)
+          .filter(Boolean) as string[]
+      );
+      return links.every((link) => !link.href || hrefs.has(link.href));
     };
 
-    // Check CSS after a short delay to allow initial load
     const timeoutId = setTimeout(() => {
-      if (!checkCSS()) {
-        console.warn('CSS not detected, attempting to reload...');
-        
-        // Try to reload CSS by finding and reloading stylesheet links
-        const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-        links.forEach((link) => {
-          const href = link.getAttribute('href');
-          if (href) {
-            // Force reload by adding timestamp
-            const newHref = href.includes('?') 
-              ? `${href}&_reload=${Date.now()}` 
-              : `${href}?_reload=${Date.now()}`;
-            link.setAttribute('href', newHref);
-          }
-        });
+      if (stylesheetsLoaded()) return;
 
-        // If still no CSS after reload attempt, reload the page
-        setTimeout(() => {
-          if (!checkCSS()) {
-            console.warn('CSS still not loaded, reloading page...');
-            window.location.reload();
-          }
-        }, 2000);
-      }
-    }, 1000);
+      console.warn('[Expenza] a stylesheet failed to load; re-requesting it');
+      document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach((link) => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        const separator = href.includes('?') ? '&' : '?';
+        link.setAttribute('href', `${href}${separator}_retry=${Date.now()}`);
+      });
+    }, 1500);
 
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    return () => clearTimeout(timeoutId);
   }, []);
 
   return null;
 }
-

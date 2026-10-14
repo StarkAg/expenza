@@ -9,7 +9,7 @@ export default function OfflineIndicator() {
   if (isOnline && !pendingSync) return null;
 
   return (
-    <div className="fixed top-safe-top left-0 right-0 z-50 px-3 sm:px-4 pt-safe-top pb-2">
+    <div className="offline-banner" role="status" aria-live="polite">
       <div
         className={`w-full max-w-md lg:max-w-2xl mx-auto px-3 sm:px-4 py-2 rounded-ios text-center text-ios-caption-1 flex items-center justify-center gap-2 ${
           !isOnline

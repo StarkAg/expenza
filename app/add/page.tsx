@@ -767,7 +767,7 @@ export default function AddExpensePage() {
 
   return (
     <div className="add-screen flex flex-col h-screen bg-white dark:bg-black overflow-hidden">
-      <main className="flex-1 overflow-hidden pb-safe-bottom flex flex-col min-h-0">
+      <main className="flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
           <div className="add-toolbar flex justify-between items-center mb-2 sm:mb-3 flex-shrink-0">
             {!editingExpense && (

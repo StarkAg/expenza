@@ -234,12 +234,21 @@ export default function StatsPage() {
     }
   });
 
-  const dailyTotal = todayExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
-  const monthlyTotal = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
+  // Money in and money out live in the same table, separated by `direction`.
+  // Rows written before income tracking have no direction and are all spending.
+  const isSpend = (exp: any) => exp.direction !== 'credit';
+  const isIncome = (exp: any) => exp.direction === 'credit';
+  const sumOf = (rows: any[]) =>
+    rows.reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
 
-  // Category summary
+  const dailyTotal = sumOf(todayExpenses.filter(isSpend));
+  const monthlyTotal = sumOf(monthlyExpenses.filter(isSpend));
+  const monthlyIncome = sumOf(monthlyExpenses.filter(isIncome));
+
+  // Category summary -- spending only, so an income category never shows up
+  // as a slice of what was spent.
   const categorySummary: Record<string, number> = {};
-  monthlyExpenses.forEach((exp) => {
+  monthlyExpenses.filter(isSpend).forEach((exp) => {
     const category = exp.category || 'Other';
     categorySummary[category] = (categorySummary[category] || 0) + parseFloat(exp.amount.toString());
   });
@@ -260,7 +269,7 @@ export default function StatsPage() {
       }
     });
     
-    const monthTotal = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
+    const monthTotal = sumOf(monthExpenses.filter(isSpend));
     chartData.push({
       date: format(month, 'MMM yyyy'),
       amount: monthTotal,
@@ -269,7 +278,7 @@ export default function StatsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
-      <main className="flex-1 overflow-y-auto pb-safe-bottom">
+      <main className="flex-1 overflow-y-auto">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-32 sm:pb-36">
           <div className="overview-summary grid grid-cols-2 gap-3 sm:gap-4 mb-6">
             <div className="bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-ios-lg p-3 sm:p-4">

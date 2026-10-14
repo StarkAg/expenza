@@ -1,185 +1,215 @@
-// Service Worker for Expenza Expense Tracker
-const CACHE_NAME = 'expenza-v10';
-const STATIC_CACHE_NAME = 'expenza-static-v10';
-const DATA_CACHE_NAME = 'expenza-data-v10';
+/* Expenza service worker.
+ *
+ * Design rules this file follows, because the previous version broke each:
+ *   1. Never call `event.respondWith()` with a promise that can resolve to
+ *      `undefined` -- that surfaces to the page as a network error. Every
+ *      path below ends in a real Response.
+ *   2. The app shell is precached, so a cold launch with no network renders
+ *      something instead of Safari's error page.
+ *   3. Activation does not preempt open tabs. `skipWaiting()` runs only when
+ *      a client asks for it, which is what keeps the update from reloading
+ *      the app out from under someone mid-entry.
+ */
 
-// Install event - cache resources
+const VERSION = 'v11';
+const STATIC_CACHE = `expenza-static-${VERSION}`;
+const PAGES_CACHE = `expenza-pages-${VERSION}`;
+const DATA_CACHE = `expenza-data-${VERSION}`;
+const CURRENT = [STATIC_CACHE, PAGES_CACHE, DATA_CACHE];
+
+const OFFLINE_URL = '/offline';
+
+// Kept small on purpose: anything that fails here fails the whole install.
+const PRECACHE = [
+  OFFLINE_URL,
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-icon.png',
+  '/favicon.ico',
+];
+
+const NAV_TIMEOUT_MS = 4000;
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    Promise.all([
-      // Skip waiting immediately for faster activation
-      self.skipWaiting(),
-    ])
+    (async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      // Individually, so one 404 cannot abort the install.
+      await Promise.all(
+        PRECACHE.map(async (url) => {
+          try {
+            const res = await fetch(url, { cache: 'reload', credentials: 'same-origin' });
+            if (res.ok) await cache.put(url, res);
+          } catch (err) {
+            /* offline at install time; the runtime paths will fill this in */
+          }
+        })
+      );
+    })()
   );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    Promise.all([
-      // Clean up old caches
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      // Take control of all pages immediately
-      self.clients.claim(),
-    ])
+    (async () => {
+      if (self.registration.navigationPreload) {
+        try {
+          await self.registration.navigationPreload.enable();
+        } catch (err) {
+          /* not supported */
+        }
+      }
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((name) => name.startsWith('expenza-') && !CURRENT.includes(name))
+          .map((name) => caches.delete(name))
+      );
+      await self.clients.claim();
+    })()
   );
 });
 
-// Fetch event - network-first for CSS, cache-first for other assets
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  const request = event.request;
-  
-  // Skip service worker for cross-origin requests (like Supabase, fonts, etc.)
-  if (url.origin !== location.origin) {
-    return; // Let browser handle cross-origin requests normally
+function offlineJson() {
+  return new Response(JSON.stringify({ offline: true }), {
+    status: 503,
+    statusText: 'Offline',
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+async function offlineDocument() {
+  const cached = (await caches.match(OFFLINE_URL)) || (await caches.match('/'));
+  if (cached) return cached;
+  return new Response(
+    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
+      '<title>Offline</title><body style="margin:0;display:grid;place-items:center;height:100dvh;background:#080808;' +
+      'color:#f5f5f2;font:600 17px -apple-system,system-ui,sans-serif">Expenza is offline.</body>',
+    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
+/* Navigations: try the network briefly (a hung request offline is worse than
+ * a fast fallback), then the last good copy of this page, then the shell. */
+async function handleNavigate(event) {
+  const { request } = event;
+  try {
+    const preloaded = await event.preloadResponse;
+    if (preloaded) {
+      if (preloaded.ok) {
+        const copy = preloaded.clone();
+        event.waitUntil(caches.open(PAGES_CACHE).then((c) => c.put(request, copy)));
+      }
+      return preloaded;
+    }
+  } catch (err) {
+    /* fall through to fetch */
   }
-  
-  // CRITICAL: For CSS files, always use network-first strategy
-  // This ensures CSS is never stale and always loads correctly
-  if (url.pathname.match(/\.css$/) || url.pathname.includes('/_next/static/css/')) {
-    event.respondWith(
-      fetch(request, {
-        cache: 'no-cache',
-        credentials: 'same-origin',
-      })
-        .then((networkResponse) => {
-          // Only cache successful CSS responses
-          if (networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(STATIC_CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // Only use cache if network fails completely
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // If no cache and network fails, return a minimal CSS to prevent blank page
-            return new Response('/* CSS failed to load */', {
-              headers: { 'Content-Type': 'text/css' },
-            });
-          });
-        })
-    );
-    return;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), NAV_TIMEOUT_MS);
+    const res = await fetch(request, { credentials: 'same-origin', signal: controller.signal });
+    clearTimeout(timer);
+    if (res && res.ok) {
+      const copy = res.clone();
+      event.waitUntil(caches.open(PAGES_CACHE).then((c) => c.put(request, copy)));
+    }
+    return res;
+  } catch (err) {
+    const cached = await caches.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    return offlineDocument();
   }
-  
-  // For JavaScript files, use network-first but with cache fallback
-  if (url.pathname.match(/\.js$/) || url.pathname.startsWith('/_next/static/chunks/')) {
-    event.respondWith(
-      fetch(request, {
-        cache: 'no-cache',
-        credentials: 'same-origin',
-      })
-        .then((networkResponse) => {
-          if (networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(STATIC_CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          return caches.match(request);
-        })
-    );
-    return;
+}
+
+/* Build output under /_next/static is content-hashed, so a hit is always
+ * correct and needs no revalidation. */
+async function handleImmutable(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const res = await fetch(request, { credentials: 'same-origin' });
+    if (res && res.ok) {
+      const copy = res.clone();
+      caches.open(STATIC_CACHE).then((c) => c.put(request, copy));
+    }
+    return res;
+  } catch (err) {
+    return new Response('', { status: 504, statusText: 'Offline' });
   }
-  
-  // For other static assets (images, fonts), use cache-first with network update
-  if (
-    url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/) ||
-    url.pathname.startsWith('/_next/static/')
-  ) {
-    event.respondWith(
-      caches.open(STATIC_CACHE_NAME).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
-          const fetchPromise = fetch(request, {
-            cache: 'no-cache',
-            credentials: 'same-origin',
-          }).then((networkResponse) => {
-            if (networkResponse.status === 200) {
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch(() => {
-            // Return cached version if network fails
-            return cachedResponse;
-          });
-          
-          return cachedResponse || fetchPromise;
-        });
-      })
-    );
-    return;
-  }
-  
-  // For HTML pages, always fetch fresh from network (no caching)
-  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request, {
-        cache: 'no-store',
-        credentials: 'same-origin',
-      }).catch(() => {
-        // Only use cache if network completely fails
-        return caches.match(request);
-      })
-    );
-    return;
-  }
-  
-  // For API/data requests, use stale-while-revalidate strategy
-  if (url.pathname.includes('/api/') || url.pathname.includes('/_next/data/')) {
-    event.respondWith(
-      caches.open(DATA_CACHE_NAME).then((cache) => {
-        return fetch(request, {
-          cache: 'no-cache',
-          credentials: 'same-origin',
-        })
-          .then((networkResponse) => {
-            if (networkResponse.status === 200) {
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          })
-          .catch(() => {
-            return cache.match(request).then((cachedResponse) => {
-              return cachedResponse || new Response('{}', {
-                headers: { 'Content-Type': 'application/json' },
-              });
-            });
-          });
-      })
-    );
-    return;
-  }
-  
-  // For all other requests, use network-first
-  event.respondWith(
-    fetch(request, {
-      cache: 'no-cache',
-      credentials: 'same-origin',
-    }).catch(() => {
-      return caches.match(request);
+}
+
+/* Serve the cached copy immediately, refresh it in the background. The event
+ * is passed in so the refresh can be kept alive with `waitUntil` -- the event
+ * is still active while its `respondWith` promise is pending, which is why
+ * this is valid here and would not be from a detached global. */
+async function staleWhileRevalidate(event, cacheName) {
+  const { request } = event;
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+
+  const network = fetch(request, { credentials: 'same-origin' })
+    .then((res) => {
+      if (res && res.ok) cache.put(request, res.clone());
+      return res;
     })
-  );
+    .catch(() => null);
+
+  if (cached) {
+    event.waitUntil(network);
+    return cached;
+  }
+
+  const res = await network;
+  if (res) return res;
+  return new Response('', { status: 504, statusText: 'Offline' });
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // Never touch non-GET: an intercepted POST that falls back to cache would
+  // silently drop an expense the user just saved.
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigate(event));
+    return;
+  }
+
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(handleImmutable(request));
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/data/')) {
+    event.respondWith(
+      fetch(request, { credentials: 'same-origin' })
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(DATA_CACHE).then((c) => c.put(request, copy));
+          }
+          return res;
+        })
+        .catch(async () => (await caches.match(request)) || offlineJson())
+    );
+    return;
+  }
+
+  if (/\.(png|jpg|jpeg|gif|svg|ico|webp|avif|woff2?|ttf|eot)$/.test(url.pathname)) {
+    event.respondWith(staleWhileRevalidate(event, STATIC_CACHE));
+    return;
+  }
+
+  event.respondWith(staleWhileRevalidate(event, STATIC_CACHE));
 });
 
-// Listen for messages from the client
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

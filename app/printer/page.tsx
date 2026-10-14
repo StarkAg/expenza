@@ -303,7 +303,7 @@ export default function PrinterPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
-      <main className="flex-1 overflow-y-auto pb-safe-bottom">
+      <main className="flex-1 overflow-y-auto">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 lg:px-6 pt-4 pb-32 sm:pb-36">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">

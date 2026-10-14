@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '../providers';
 import BottomNav from '../components/BottomNav';
 import { hapticFeedback } from '../utils/haptics';
+import { readApiResponse } from '../lib/http';
 import { formatCurrency } from '../utils/currency';
 import { getCategories, type Category } from '../utils/categories';
 import { usePendingLive } from '../hooks/usePendingLive';
@@ -75,7 +76,8 @@ export default function InboxPage() {
             : {}),
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || 'Action failed');
+      const result = await readApiResponse(res);
+      if (!result.ok) throw new Error(result.error || 'Action failed');
       hapticFeedback('light');
       refresh();
     } catch (e: any) {
@@ -105,7 +107,7 @@ export default function InboxPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black">
-      <main className="flex-1 overflow-y-auto pb-safe-bottom">
+      <main className="flex-1 overflow-y-auto">
         <div className="w-full max-w-md lg:max-w-2xl mx-auto px-4 sm:px-5 md:px-6 pt-4 pb-32 sm:pb-36">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-ios-title-2 text-black dark:text-white">Auto-Tracked</h1>

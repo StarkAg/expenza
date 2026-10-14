@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSupabase } from '../providers';
+import { readApiResponse, objectOf } from '../lib/http';
 
 export interface PendingTransaction {
   id: string;
@@ -52,13 +53,17 @@ export function usePendingLive(username: string | null, status: string = 'pendin
         `/api/pending?username=${encodeURIComponent(username)}&status=${status}`,
         { cache: 'no-store' }
       );
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed to load');
-      const data = await res.json();
-      setTransactions(data.transactions || []);
-      setPendingCount(data.pendingCount || 0);
+      const result = await readApiResponse(res);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      const data = objectOf(result);
+      setTransactions(Array.isArray(data.transactions) ? data.transactions : []);
+      setPendingCount(typeof data.pendingCount === 'number' ? data.pendingCount : 0);
       setError(null);
     } catch (e: any) {
-      setError(e.message || 'Could not load transactions');
+      setError(e?.message || 'Could not load transactions');
     } finally {
       setLoading(false);
     }

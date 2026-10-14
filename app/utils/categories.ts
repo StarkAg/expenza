@@ -1,6 +1,8 @@
 // Category utilities backed by the shared Convex database.
 import { createConvexDatabase, type ConvexDatabase } from '../lib/convexDb';
 
+export type CategoryKind = 'expense' | 'income';
+
 const DEFAULT_CATEGORIES = [
   'Food',
   'Transport',
@@ -8,7 +10,19 @@ const DEFAULT_CATEGORIES = [
   'Bills',
   'Entertainment',
   'Health',
+  // Money sent that is a loan -- lending to someone, or repaying one.
+  'Loan',
   'Other',
+];
+
+// Money coming in. 'Loan' appears on both sides on purpose: borrowing from
+// someone is income, and sending it back out is an expense.
+export const DEFAULT_INCOME_CATEGORIES = [
+  'Salary',
+  'Loan',
+  'Pocket money',
+  'Refund',
+  'Other income',
 ];
 
 // Default colors for each category (one color per category)
@@ -19,7 +33,12 @@ const DEFAULT_CATEGORY_COLORS: Record<string, string> = {
   'Bills': '#5F3DC4',
   'Entertainment': '#2F9E44',
   'Health': '#E8590C',
+  'Loan': '#1971C2',
   'Other': '#868E96',
+  'Salary': '#2F9E44',
+  'Pocket money': '#F59F00',
+  'Refund': '#0CA678',
+  'Other income': '#868E96',
 };
 
 // Preset aesthetic colors
@@ -43,6 +62,21 @@ export interface Category {
   name: string;
   color: string;
   display_order?: number;
+  /** Absent means 'expense' -- every category saved before income existed. */
+  kind?: CategoryKind;
+}
+
+/** Rows written before income tracking have no `kind`; they are all expenses. */
+export const kindOf = (row: { kind?: string | null }): CategoryKind =>
+  row.kind === 'income' ? 'income' : 'expense';
+
+export function defaultsFor(kind: CategoryKind): Category[] {
+  const names = kind === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES;
+  return names.map((name) => ({
+    name,
+    kind,
+    color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
+  }));
 }
 
 function getDatabase(): ConvexDatabase | null {
@@ -63,20 +97,17 @@ function dispatchCategoriesUpdate() {
   }
 }
 
-// Get categories from Supabase (with localStorage fallback)
-export async function getCategories(): Promise<Category[]> {
+// Get categories from Supabase (with localStorage fallback).
+// `kind` splits the single table into the expense list and the income list;
+// rows saved before income tracking have no `kind` and read as expenses.
+export async function getCategories(kind: CategoryKind = 'expense'): Promise<Category[]> {
   const username = getUsername();
-  if (!username) {
-    // Return defaults if no username
-    return DEFAULT_CATEGORIES.map((name) => ({
-      name,
-      color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
-    }));
-  }
+  const storageKey = kind === 'income' ? `categories_income_${username}` : `categories_${username}`;
+
+  if (!username) return defaultsFor(kind);
 
   const supabase = getDatabase();
-  
-  // Try Supabase first
+
   if (supabase && navigator.onLine) {
     try {
       const { data, error } = await supabase
@@ -86,42 +117,47 @@ export async function getCategories(): Promise<Category[]> {
         .order('display_order', { ascending: true })
         .order('name', { ascending: true });
 
-      if (!error && data && data.length > 0) {
-        // Sync to localStorage for offline access
-        const categories = data.map((cat) => ({
-          name: cat.name,
-          color: cat.color,
-          id: cat.id,
-          display_order: cat.display_order,
-        }));
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(`categories_${username}`, JSON.stringify(categories));
+      if (!error && data) {
+        const mine = data.filter((cat) => kindOf(cat) === kind);
+        if (mine.length > 0) {
+          const categories = mine.map((cat) => ({
+            name: cat.name,
+            color: cat.color,
+            id: cat.id,
+            display_order: cat.display_order,
+            kind,
+          }));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(storageKey, JSON.stringify(categories));
+          }
+          return categories;
         }
-        return categories;
+        // No rows of this kind yet. Seed them without touching the other kind.
+        const seeded = defaultsFor(kind);
+        seedCategories(seeded, username, kind);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(storageKey, JSON.stringify(seeded));
+        }
+        return seeded;
       }
     } catch (error) {
-      console.error('Error fetching categories from Supabase:', error);
+      console.error('Error fetching categories:', error);
     }
   }
 
-  // Fallback to localStorage
   if (typeof window !== 'undefined') {
-    const storedCategories = localStorage.getItem(`categories_${username}`);
-    if (storedCategories) {
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
       try {
-        const parsed = JSON.parse(storedCategories);
-        // Handle migration from old format
+        const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
           if (typeof parsed[0] === 'string') {
-            // Old format - migrate to new format
             const migrated = parsed.map((name: string) => ({
               name,
+              kind,
               color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
             }));
-            // Save migrated format
-            localStorage.setItem(`categories_${username}`, JSON.stringify(migrated));
-            // Try to sync to Supabase
-            syncCategoriesToSupabase(migrated, username);
+            localStorage.setItem(storageKey, JSON.stringify(migrated));
             return migrated;
           }
           return parsed;
@@ -132,42 +168,66 @@ export async function getCategories(): Promise<Category[]> {
     }
   }
 
-  // Return defaults
-  const defaults = DEFAULT_CATEGORIES.map((name) => ({
-    name,
-    color: DEFAULT_CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLORS['Other'],
-  }));
-  
-  // Initialize defaults in Supabase
-  if (supabase && navigator.onLine) {
-    syncCategoriesToSupabase(defaults, username);
-  }
-  
-  return defaults;
+  return defaultsFor(kind);
 }
 
-// Sync categories to Supabase
-async function syncCategoriesToSupabase(categories: Category[], username: string) {
+/** Insert missing categories for one kind. Never deletes anything. */
+async function seedCategories(categories: Category[], username: string, kind: CategoryKind) {
+  const supabase = getDatabase();
+  if (!supabase || !navigator.onLine) return;
+  try {
+    await supabase.from('categories').insert(
+      categories.map((cat, index) => ({
+        username,
+        name: cat.name,
+        color: cat.color,
+        display_order: index,
+        kind,
+      }))
+    );
+  } catch (error) {
+    console.error('Error seeding categories:', error);
+  }
+}
+
+// Replace the categories of ONE kind.
+//
+// The previous version deleted every category for the user and reinserted,
+// which would silently destroy the income list every time the expense list
+// was saved. Deletion is now scoped to the rows of the kind being replaced,
+// matched by id -- a `.eq('kind', 'expense')` filter would miss the legacy
+// rows that predate the field and have no `kind` at all.
+async function syncCategoriesToSupabase(
+  categories: Category[],
+  username: string,
+  kind: CategoryKind = 'expense'
+) {
   const supabase = getDatabase();
   if (!supabase || !navigator.onLine) return;
 
   try {
-    // Delete existing categories for this user
-    await supabase.from('categories').delete().eq('username', username);
+    const { data: existing } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('username', username);
 
-    // Insert new categories
-    const categoriesToInsert = categories.map((cat, index) => ({
+    for (const row of existing || []) {
+      if (kindOf(row) !== kind || !row.id) continue;
+      await supabase.from('categories').delete().eq('id', row.id);
+    }
+
+    const toInsert = categories.map((cat, index) => ({
       username,
       name: cat.name,
       color: cat.color,
       display_order: index,
+      kind,
     }));
-
-    if (categoriesToInsert.length > 0) {
-      await supabase.from('categories').insert(categoriesToInsert);
+    if (toInsert.length > 0) {
+      await supabase.from('categories').insert(toInsert);
     }
   } catch (error) {
-    console.error('Error syncing categories to Supabase:', error);
+    console.error('Error syncing categories:', error);
   }
 }
 
